@@ -32,6 +32,7 @@ plt.switch_backend("agg")  # allow headless execution on CI/servers
 # Helper utilities
 ###############################################################################
 
+
 def _ensure_dir(path: Path) -> None:
     """Crea directory se non esiste"""
     path.mkdir(parents=True, exist_ok=True)
@@ -63,9 +64,11 @@ def _save_fig(fig: plt.Figure, path: Path) -> None:
     fig.savefig(path, dpi=120)
     plt.close(fig)
 
+
 ###############################################################################
-# Main EDA 
+# Main EDA
 ###############################################################################
+
 
 def run_eda(raw_dir: Path, output_dir: Path) -> None:
     # 1. Carica raw CSVs
@@ -74,7 +77,9 @@ def run_eda(raw_dir: Path, output_dir: Path) -> None:
     raw_labels = raw_dir / "train_labels.csv"
 
     if not raw_train.exists() or not raw_labels.exists():
-        raise FileNotFoundError("train_values.csv or train_labels.csv not found in " f"{raw_dir}")
+        raise FileNotFoundError(
+            "train_values.csv or train_labels.csv not found in " f"{raw_dir}"
+        )
 
     X_train = pd.read_csv(raw_train)
     y_train = pd.read_csv(raw_labels)
@@ -94,8 +99,12 @@ def run_eda(raw_dir: Path, output_dir: Path) -> None:
         "legal_ownership_status",
     ]
     geo_cols = ["geo_level_1_id", "geo_level_2_id", "geo_level_3_id"]
-    num_cols = [c for c in X_train.columns if c not in cat_cols + geo_cols + ["building_id"]]
-    print(f"cat_cols: {len(cat_cols)}, geo_cols: {len(geo_cols)}, num_cols: {len(num_cols)}")
+    num_cols = [
+        c for c in X_train.columns if c not in cat_cols + geo_cols + ["building_id"]
+    ]
+    print(
+        f"cat_cols: {len(cat_cols)}, geo_cols: {len(geo_cols)}, num_cols: {len(num_cols)}"
+    )
 
     # 3. Prepara le cartelle di Output
     print("\nCreating output directories…")
@@ -110,10 +119,16 @@ def run_eda(raw_dir: Path, output_dir: Path) -> None:
     _save_table(dtypes, tables_dir / "data_types")
 
     miss_cols = df.isna().mean().mul(100).to_frame("missing_pct")
-    _save_table(miss_cols.sort_values("missing_pct", ascending=False), tables_dir / "missing_columns")
+    _save_table(
+        miss_cols.sort_values("missing_pct", ascending=False),
+        tables_dir / "missing_columns",
+    )
 
     miss_rows = df.isna().mean(axis=1).mul(100).to_frame("missing_pct")
-    _save_table(miss_rows.describe(percentiles=[0.95, 0.99]), tables_dir / "missing_rows_summary")
+    _save_table(
+        miss_rows.describe(percentiles=[0.95, 0.99]),
+        tables_dir / "missing_rows_summary",
+    )
 
     # 5. Sommario & skewness
     print("\nNumerical summary & skewness…")
@@ -127,7 +142,12 @@ def run_eda(raw_dir: Path, output_dir: Path) -> None:
     _ensure_dir(cat_counts_dir)
     for col in cat_cols + geo_cols:
         print(f"   processing {col}…")
-        counts = df[col].value_counts(dropna=False).to_frame("freq").assign(pct=lambda x: x.freq / len(df) * 100)
+        counts = (
+            df[col]
+            .value_counts(dropna=False)
+            .to_frame("freq")
+            .assign(pct=lambda x: x.freq / len(df) * 100)
+        )
         _save_table(counts, cat_counts_dir / f"{col}_counts")
 
     # 7. Target distribution plot
@@ -147,10 +167,12 @@ def run_eda(raw_dir: Path, output_dir: Path) -> None:
     ax2.set_title("Correlation heatmap (numeric features)")
     _save_fig(fig2, figs_dir / "correlation_heatmap.png")
 
-    # 9. Salva lista feature 
+    # 9. Salva lista feature
     print("\nWriting feature_lists.json…")
     feature_lists = {"cat_cols": cat_cols, "geo_cols": geo_cols, "num_cols": num_cols}
-    (output_dir / "feature_lists.json").write_text(pd.Series(feature_lists).to_json(indent=2))
+    (output_dir / "feature_lists.json").write_text(
+        pd.Series(feature_lists).to_json(indent=2)
+    )
 
     # 10. README in output dir
     readme_text = textwrap.dedent(
@@ -165,14 +187,28 @@ def run_eda(raw_dir: Path, output_dir: Path) -> None:
 
     print(f"\nEDA completed. Results saved to {_human_path(output_dir)}\n")
 
+
 ###############################################################################
 # CLI entry‑point
 ###############################################################################
 
+
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run EDA for the Richter's Predictor dataset.")
-    parser.add_argument("--raw_dir", type=Path, default=Path("data/raw"), help="Directory containing raw CSV files")
-    parser.add_argument("--output_dir", type=Path, default=Path("reports/eda"), help="Directory to save tables & figures")
+    parser = argparse.ArgumentParser(
+        description="Run EDA for the Richter's Predictor dataset."
+    )
+    parser.add_argument(
+        "--raw_dir",
+        type=Path,
+        default=Path("data/raw"),
+        help="Directory containing raw CSV files",
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=Path,
+        default=Path("reports/eda"),
+        help="Directory to save tables & figures",
+    )
     return parser.parse_args()
 
 
