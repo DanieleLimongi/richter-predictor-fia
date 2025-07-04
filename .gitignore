@@ -7,3 +7,11 @@ __pycache__/
 *.pyd
 # Virtual env
 .venv/
+/venv/
+# macOS
+.DS_Store
+**/.DS_Store
+#file dei pesi troppo grande S
+data/interim_tf/train_interim.tfrecord
+/data/interim_tf/train_interim.tfrecord
+
