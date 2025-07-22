@@ -9,7 +9,8 @@ from pathlib import Path
 import json, math
 import pandas as pd
 import tensorflow as tf
-from tensorflow.keras import layers, Model, Input
+from tensorflow import keras
+from keras import layers, Model, Input
 
 # ─────────── percorsi ───────────────────────────────────────
 DATA_PARQUET = Path("data/interim_tf/train_interim.parquet")
@@ -41,7 +42,7 @@ for col in num_cols:
     inputs[col] = inp; encoded.append(norm)
 
 # binarie
-# binarie 0/1 -> float32  ✅ senza Lambda
+# binarie 0/1 -> float32 senza Lambda
 for col in binary_cols:
     inp  = Input(shape=(1,), name=col, dtype="int8")
     cast = layers.Rescaling(scale=1.0, offset=0.0, name=f"cast_{col}")(inp)
@@ -58,6 +59,10 @@ for col in cat_cols:
 for col, card in onehot_cols:
     inp = Input(shape=(1,), name=col, dtype="int32")
     lookup = layers.IntegerLookup(max_tokens=card+2, output_mode="one_hot", name=f"lookup_{col}")
+    
+    # ADAPT del layer sui dati
+    lookup.adapt(df[col].values.reshape(-1, 1))
+    
     onehot = lookup(inp)
     inputs[col] = inp; encoded.append(onehot)
     lookup_layers[col] = lookup
@@ -66,6 +71,10 @@ for col, card in onehot_cols:
 for col, card in embed_cols:
     inp = Input(shape=(1,), name=col, dtype="int32")
     lookup = layers.IntegerLookup(max_tokens=card+2, output_mode="int", name=f"lookup_{col}")
+    
+    # ADAPT del layer sui dati
+    lookup.adapt(df[col].values.reshape(-1, 1))
+    
     idx = lookup(inp)
     emb = layers.Embedding(card+2, emb_dim(card))(idx)
     flat = layers.Flatten()(emb)
@@ -80,13 +89,11 @@ for layer in encoded:
         col = layer.name.replace("norm_", "")
         layer.adapt(feat_ds.map(lambda x: x[col]))
 
-print("Adatto IntegerLookup…")
-for col, lookup in lookup_layers.items():
-    lookup.adapt(df[col].values)
+# Note: IntegerLookup layers sono già stati adattati sopra durante la creazione
 
 # ─────────── build e salva model ────────────────────────────
 concat = layers.Concatenate(name="concat_features")(encoded)
 preproc_model = Model(inputs, concat, name="preprocessing")
 preproc_model.save(PREPROC_FILE)   # salva in formato .keras
-print("✅ Preprocessing salvato in", PREPROC_FILE)
+print(" Preprocessing salvato in", PREPROC_FILE)
 

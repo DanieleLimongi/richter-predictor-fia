@@ -43,5 +43,17 @@
     "has_secondary_use_use_police",
     "has_secondary_use_other"
   ],
-  "target": "damage_grade"
+  "target": "damage_grade",
+  "threshold_params": {
+    "geo2_threshold": 0.0005650175910214716,
+    "geo3_threshold": 0.0001223210738148823,
+    "geo2_categories_before": 1414,
+    "geo2_categories_after": 619,
+    "geo3_categories_before": 11595,
+    "geo3_categories_after": 2655,
+    "geo2_other_percentage": 14.756274918361786,
+    "geo3_other_percentage": 39.26462292930572,
+    "optimization_enabled": true,
+    "manual_thresholds_used": false
+  }
 }

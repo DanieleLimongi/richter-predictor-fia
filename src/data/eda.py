@@ -8,8 +8,8 @@ Usage (from project root):
 
 Outputs
 -------
-* CSV summaries → <output_dir>/tables/
-* PNG plots     → <output_dir>/figures/
+* CSV summaries -> <output_dir>/tables/
+* PNG plots     -> <output_dir>/figures/
 * feature_lists.json with cat_cols, geo_cols, num_cols
 
 The script is *read‑only* for raw data; it never modifies files in
@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import textwrap
+import json
 from pathlib import Path
 from typing import List
 
@@ -49,17 +50,17 @@ def _human_path(path: Path) -> str:
 def _save_table(df: pd.DataFrame, path: Path) -> None:
     """Save dataframe as CSV and (optionally) Markdown."""
     csv_path = path.with_suffix(".csv")
-    print(f"   saving table → {_human_path(csv_path)}")
+    print(f"   saving table -> {_human_path(csv_path)}")
     df.to_csv(csv_path, index=True)
     try:
         md_path = path.with_suffix(".md")
-        md_path.write_text(df.to_markdown(index=True))
+        md_path.write_text(df.to_markdown(index=True), encoding='utf-8')
     except Exception:
         pass  # markdown export is optional
 
 
 def _save_fig(fig: plt.Figure, path: Path) -> None:
-    print(f"   saving figure → {_human_path(path)}")
+    print(f"   saving figure -> {_human_path(path)}")
     fig.tight_layout()
     fig.savefig(path, dpi=120)
     plt.close(fig)
@@ -72,7 +73,7 @@ def _save_fig(fig: plt.Figure, path: Path) -> None:
 
 def run_eda(raw_dir: Path, output_dir: Path) -> None:
     # 1. Carica raw CSVs
-    print("\nLoading raw CSV files…")
+    print("\nLoading raw CSV files...")
     raw_train = raw_dir / "train_values.csv"
     raw_labels = raw_dir / "train_labels.csv"
 
@@ -87,7 +88,7 @@ def run_eda(raw_dir: Path, output_dir: Path) -> None:
     print(f"Rows in train_values: {len(X_train):,}; merged rows: {len(df):,}")
 
     # 2. Definisce gruppi di Features
-    print("\nDefining feature groups…")
+    print("\nDefining feature groups...")
     cat_cols: List[str] = [
         "land_surface_condition",
         "foundation_type",
@@ -107,14 +108,14 @@ def run_eda(raw_dir: Path, output_dir: Path) -> None:
     )
 
     # 3. Prepara le cartelle di Output
-    print("\nCreating output directories…")
+    print("\nCreating output directories...")
     tables_dir = output_dir / "tables"
     figs_dir = output_dir / "figures"
     _ensure_dir(tables_dir)
     _ensure_dir(figs_dir)
 
     # 4. Data types & Valori mancanti
-    print("\nData‑type overview & missing values…")
+    print("\nData-type overview & missing values...")
     dtypes = df.dtypes.to_frame(name="dtype")
     _save_table(dtypes, tables_dir / "data_types")
 
@@ -131,17 +132,17 @@ def run_eda(raw_dir: Path, output_dir: Path) -> None:
     )
 
     # 5. Sommario & skewness
-    print("\nNumerical summary & skewness…")
+    print("\nNumerical summary & skewness...")
     num_desc = df[num_cols].describe(percentiles=[0.01, 0.25, 0.5, 0.75, 0.99]).T
     skew = df[num_cols].skew().round(3).to_frame("skew")
     _save_table(num_desc.join(skew), tables_dir / "numeric_summary")
 
     # 6. Conteggio categoriche
-    print("\nCategorical value counts… (this may take a minute)")
+    print("\nCategorical value counts... (this may take a minute)")
     cat_counts_dir = tables_dir / "categorical_counts"
     _ensure_dir(cat_counts_dir)
     for col in cat_cols + geo_cols:
-        print(f"   processing {col}…")
+        print(f"   processing {col}...")
         counts = (
             df[col]
             .value_counts(dropna=False)
@@ -151,14 +152,14 @@ def run_eda(raw_dir: Path, output_dir: Path) -> None:
         _save_table(counts, cat_counts_dir / f"{col}_counts")
 
     # 7. Target distribution plot
-    print("\nPlotting target distribution…")
+    print("\nPlotting target distribution...")
     fig, ax = plt.subplots(figsize=(5, 3))
     sns.countplot(x="damage_grade", data=df, order=[1, 2, 3], ax=ax)
     ax.set_title("Target distribution (damage_grade)")
     _save_fig(fig, figs_dir / "target_distribution.png")
 
     # 8. Correlazioni & heatmap
-    print("\nComputing correlations & heatmap… (can take ~30 s)")
+    print("\nComputing correlations & heatmap... (can take ~30 s)")
     corr = df[num_cols + ["damage_grade"]].corr()
     _save_table(corr.round(3), tables_dir / "correlation_matrix")
 
@@ -168,28 +169,16 @@ def run_eda(raw_dir: Path, output_dir: Path) -> None:
     _save_fig(fig2, figs_dir / "correlation_heatmap.png")
 
     # 9. Salva lista feature
-    print("\nWriting feature_lists.json…")
+    print("\nWriting feature_lists.json...")
     feature_lists = {"cat_cols": cat_cols, "geo_cols": geo_cols, "num_cols": num_cols}
-    (output_dir / "feature_lists.json").write_text(
-        pd.Series(feature_lists).to_json(indent=2)
-    )
-
-    # 10. README in output dir
-    readme_text = textwrap.dedent(
-        """EDA output
-        ==========
-        * tables/  → CSV summaries (types, missing values, numeric stats, categorical counts, correlations)
-        * figures/ → PNG plots (target distribution, correlation heatmap)
-        * feature_lists.json → lists of categorical, geo‑id and numeric columns for preprocessing pipelines.
-        """
-    )
-    (output_dir / "README.txt").write_text(readme_text)
+    with open(output_dir / "feature_lists.json", 'w', encoding='utf-8') as f:
+        json.dump(feature_lists, f, indent=2)
 
     print(f"\nEDA completed. Results saved to {_human_path(output_dir)}\n")
 
 
 ###############################################################################
-# CLI entry‑point
+# CLI entry-point
 ###############################################################################
 
 

@@ -1,0 +1,78 @@
+{
+  "threshold_optimization": {
+    "enable": true,
+    "description": "Configurazione per l'ottimizzazione delle soglie categoriche",
+    "validation": {
+      "use_nested_cv": true,
+      "outer_splits": 3,
+      "inner_splits": 2,
+      "scoring": "f1_micro",
+      "description": "Nested CV veloce - outer per stima finale, inner per tuning iperparametri"
+    },
+    "random_search": {
+      "n_iterations": 10,
+      "random_state": 42,
+      "cv_folds": 3,
+      "scoring": "f1_micro"
+    },
+    "geo_level_2_id": {
+      "threshold_range": {
+        "min": 0.0004,
+        "max": 0.001
+      },
+      "description": "Soglie per geo_level_2_id - categorie con frequenza < soglia diventano OTHER"
+    },
+    "geo_level_3_id": {
+      "threshold_range": {
+        "min": 0.0001,
+        "max": 0.0002
+      },
+      "description": "Soglie per geo_level_3_id - categorie con frequenza < soglia diventano OTHER"
+    },
+    "manual_thresholds": {
+      "use_manual": false,
+      "geo_level_2_id": 0.0007,
+      "geo_level_3_id": 0.00015,
+      "description": "Imposta use_manual=true per usare soglie fisse invece dell'ottimizzazione"
+    }
+  },
+  "neural_network": {
+    "nested_cv": {
+      "enable": true,
+      "outer_splits": 3,
+      "inner_splits": 2,
+      "description": "Nested CV veloce per training rete neurale"
+    },
+    "hyperparameter_grid": {
+      "dense_layers": [
+        [256, 128],
+        [512, 256, 128],
+        [256, 128, 64]
+      ],
+      "dropout_rates": [
+        [0.3, 0.2],
+        [0.4, 0.3],
+        [0.2, 0.1]
+      ],
+      "learning_rates": [0.001, 0.0005, 0.002],
+      "batch_sizes": [512, 1024]
+    }
+  },
+  "dataset_creation": {
+    "output_formats": {
+      "parquet": true,
+      "tfrecord": true
+    },
+    "data_types": {
+      "categorical_dtype": "int32",
+      "numeric_dtype": "float32",
+      "binary_dtype": "int8",
+      "target_dtype": "int8"
+    }
+  },
+  "paths": {
+    "raw_data": "data/raw",
+    "interim_data": "data/interim_tf", 
+    "reports": "reports/threshold_optimization"
+  }
+}

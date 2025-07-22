@@ -1,0 +1,115 @@
+{
+  "best_params": {
+    "iteration": 2,
+    "geo2_threshold": 0.0005650175910214716,
+    "geo3_threshold": 0.0001223210738148823,
+    "score": 0.7153311000341519,
+    "geo2_categories_original": 1414,
+    "geo2_categories_remaining": 619,
+    "geo3_categories_original": 11595,
+    "geo3_categories_remaining": 2655
+  },
+  "best_score": 0.7153311000341519,
+  "history": [
+    {
+      "iteration": 1,
+      "geo2_threshold": 0.0007836560790747302,
+      "geo3_threshold": 0.0001025010755222667,
+      "score": 0.7151238867080325,
+      "geo2_categories_original": 1414,
+      "geo2_categories_remaining": 471,
+      "geo3_categories_original": 11595,
+      "geo3_categories_remaining": 3366
+    },
+    {
+      "iteration": 2,
+      "geo2_threshold": 0.0005650175910214716,
+      "geo3_threshold": 0.0001223210738148823,
+      "score": 0.7153311000341519,
+      "geo2_categories_original": 1414,
+      "geo2_categories_remaining": 619,
+      "geo3_categories_original": 11595,
+      "geo3_categories_remaining": 2655
+    },
+    {
+      "iteration": 3,
+      "geo2_threshold": 0.0008418827284984075,
+      "geo3_threshold": 0.00016766994874229112,
+      "score": 0.7130939635688275,
+      "geo2_categories_original": 1414,
+      "geo2_categories_remaining": 430,
+      "geo3_categories_original": 11595,
+      "geo3_categories_remaining": 1530
+    },
+    {
+      "iteration": 4,
+      "geo2_threshold": 0.0009353077406229072,
+      "geo3_threshold": 0.00010869388326294163,
+      "score": 0.7141645657537768,
+      "geo2_categories_original": 1414,
+      "geo2_categories_remaining": 376,
+      "geo3_categories_original": 11595,
+      "geo3_categories_remaining": 3059
+    },
+    {
+      "iteration": 5,
+      "geo2_threshold": 0.0006531530918111623,
+      "geo3_threshold": 0.00010297972194380704,
+      "score": 0.7145406195678451,
+      "geo2_categories_original": 1414,
+      "geo2_categories_remaining": 562,
+      "geo3_categories_original": 11595,
+      "geo3_categories_remaining": 3366
+    },
+    {
+      "iteration": 6,
+      "geo2_threshold": 0.000531182784882162,
+      "geo3_threshold": 0.00015053552881033624,
+      "score": 0.7143602672284451,
+      "geo2_categories_original": 1414,
+      "geo2_categories_remaining": 645,
+      "geo3_categories_original": 11595,
+      "geo3_categories_remaining": 1836
+    },
+    {
+      "iteration": 7,
+      "geo2_threshold": 0.0004159215818103182,
+      "geo3_threshold": 0.00011988376506866485,
+      "score": 0.7144063146342493,
+      "geo2_categories_original": 1414,
+      "geo2_categories_remaining": 737,
+      "geo3_categories_original": 11595,
+      "geo3_categories_remaining": 2655
+    },
+    {
+      "iteration": 8,
+      "geo2_threshold": 0.000789930662667714,
+      "geo3_threshold": 0.00015449414806032168,
+      "score": 0.7144830603105898,
+      "geo2_categories_original": 1414,
+      "geo2_categories_remaining": 468,
+      "geo3_categories_original": 11595,
+      "geo3_categories_remaining": 1744
+    },
+    {
+      "iteration": 9,
+      "geo2_threshold": 0.000532264373224418,
+      "geo3_threshold": 0.0001589265683875909,
+      "score": 0.714022586252547,
+      "geo2_categories_original": 1414,
+      "geo2_categories_remaining": 645,
+      "geo3_categories_original": 11595,
+      "geo3_categories_remaining": 1665
+    },
+    {
+      "iteration": 10,
+      "geo2_threshold": 0.0008856582740066961,
+      "geo3_threshold": 0.00010064987596780611,
+      "score": 0.7138192102102447,
+      "geo2_categories_original": 1414,
+      "geo2_categories_remaining": 402,
+      "geo3_categories_original": 11595,
+      "geo3_categories_remaining": 3366
+    }
+  ]
+}

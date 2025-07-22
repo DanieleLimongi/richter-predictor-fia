@@ -1,5 +1,5 @@
 {
-  "cat_cols":[
+  "cat_cols": [
     "land_surface_condition",
     "foundation_type",
     "roof_type",
@@ -9,12 +9,12 @@
     "plan_configuration",
     "legal_ownership_status"
   ],
-  "geo_cols":[
+  "geo_cols": [
     "geo_level_1_id",
     "geo_level_2_id",
     "geo_level_3_id"
   ],
-  "num_cols":[
+  "num_cols": [
     "count_floors_pre_eq",
     "age",
     "area_percentage",
