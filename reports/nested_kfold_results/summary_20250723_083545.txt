@@ -1,0 +1,16 @@
+NESTED K-FOLD CROSS VALIDATION RESULTS
+==================================================
+
+Final Score: 1.000 ± 0.000
+Total Time: 0.6 minutes
+Recommended Config: AdaptiveStrategy
+
+Outer Fold Scores:
+  Fold 1: 1.000
+  Fold 2: 1.000
+  Fold 3: 1.000
+  Fold 4: 1.000
+  Fold 5: 1.000
+
+Config Frequency:
+  AdaptiveStrategy: 5 folds (100.0%)

@@ -1,5 +1,11 @@
 {
-  "cat_cols": [
+  "numeric_features": [
+    "age",
+    "area_percentage",
+    "height_percentage"
+  ],
+  "categorical_features": [
+    "count_floors_pre_eq",
     "land_surface_condition",
     "foundation_type",
     "roof_type",
@@ -7,18 +13,15 @@
     "other_floor_type",
     "position",
     "plan_configuration",
-    "legal_ownership_status"
+    "legal_ownership_status",
+    "count_families"
   ],
-  "geo_cols": [
+  "geographic_features": [
     "geo_level_1_id",
     "geo_level_2_id",
     "geo_level_3_id"
   ],
-  "num_cols": [
-    "count_floors_pre_eq",
-    "age",
-    "area_percentage",
-    "height_percentage",
+  "binary_features": [
     "has_superstructure_adobe_mud",
     "has_superstructure_mud_mortar_stone",
     "has_superstructure_stone_flag",
@@ -30,7 +33,6 @@
     "has_superstructure_rc_non_engineered",
     "has_superstructure_rc_engineered",
     "has_superstructure_other",
-    "count_families",
     "has_secondary_use",
     "has_secondary_use_agriculture",
     "has_secondary_use_hotel",
@@ -42,5 +44,6 @@
     "has_secondary_use_gov_office",
     "has_secondary_use_use_police",
     "has_secondary_use_other"
-  ]
+  ],
+  "target_feature": "damage_grade"
 }

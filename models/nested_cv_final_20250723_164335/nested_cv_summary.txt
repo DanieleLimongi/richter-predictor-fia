@@ -1,0 +1,21 @@
+NESTED CROSS-VALIDATION TRAINING RESULTS
+==================================================
+
+Configuration:
+- Epochs: 100
+- Early Stopping Patience: 15
+- Batch Size: 2048
+- Outer Folds: 5
+- Inner Folds: 3
+- Preprocessing: AdaptiveStrategy
+
+Results:
+- Final Accuracy: 0.6866 ± 0.0019
+- Total Time: 63.2 minutes
+
+Fold Details:
+- Fold 1: 0.6839
+- Fold 2: 0.6867
+- Fold 3: 0.6894
+- Fold 4: 0.6856
+- Fold 5: 0.6876

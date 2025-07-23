@@ -1,0 +1,102 @@
+{
+  "count_floors_pre_eq": {
+    "cardinality": 9,
+    "entropy": 1.519808799073138,
+    "most_common": {
+      "2": 156623,
+      "3": 55617,
+      "1": 40441
+    },
+    "least_common_count": "1"
+  },
+  "land_surface_condition": {
+    "cardinality": 3,
+    "entropy": 0.7715685939886789,
+    "most_common": {
+      "t": 216757,
+      "n": 35528,
+      "o": 8316
+    },
+    "least_common_count": "8316"
+  },
+  "foundation_type": {
+    "cardinality": 5,
+    "entropy": 0.9068969304324865,
+    "most_common": {
+      "r": 219196,
+      "w": 15118,
+      "u": 14260
+    },
+    "least_common_count": "1448"
+  },
+  "roof_type": {
+    "cardinality": 3,
+    "entropy": 1.0994734860374318,
+    "most_common": {
+      "n": 182842,
+      "q": 61576,
+      "x": 16183
+    },
+    "least_common_count": "16183"
+  },
+  "ground_floor_type": {
+    "cardinality": 5,
+    "entropy": 0.945968265559943,
+    "most_common": {
+      "f": 209619,
+      "x": 24877,
+      "v": 24593
+    },
+    "least_common_count": "508"
+  },
+  "other_floor_type": {
+    "cardinality": 4,
+    "entropy": 1.4665774551421218,
+    "most_common": {
+      "q": 165282,
+      "x": 43448,
+      "j": 39843
+    },
+    "least_common_count": "12028"
+  },
+  "position": {
+    "cardinality": 4,
+    "entropy": 0.9927064325809504,
+    "most_common": {
+      "s": 202090,
+      "t": 42896,
+      "j": 13282
+    },
+    "least_common_count": "2333"
+  },
+  "plan_configuration": {
+    "cardinality": 10,
+    "entropy": 0.3099401141496779,
+    "most_common": {
+      "d": 250072,
+      "q": 5692,
+      "u": 3649
+    },
+    "least_common_count": "22"
+  },
+  "legal_ownership_status": {
+    "cardinality": 4,
+    "entropy": 0.2802069105991273,
+    "most_common": {
+      "v": 250939,
+      "a": 5512,
+      "w": 2677
+    },
+    "least_common_count": "1473"
+  },
+  "count_families": {
+    "cardinality": 10,
+    "entropy": 0.7356237200150565,
+    "most_common": {
+      "1": 226115,
+      "0": 20862,
+      "2": 11294
+    },
+    "least_common_count": "2"
+  }
+}

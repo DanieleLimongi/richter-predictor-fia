@@ -1,0 +1,61 @@
+# File temporanei e cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Logs e output temporanei
+*.log
+logs/
+*.tmp
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Virtual environments
+.env
+.venv
+
+# Large model files (optional - dipende se vuoi includerli)
+# models/*.keras
+# models/*.h5
+
+# Submission files (vengono generati)
+submission_*.csv
+
+# Reports che possono essere rigenerati
+# reports/
+
+# Test output
+test_output/

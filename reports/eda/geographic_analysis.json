@@ -1,0 +1,32 @@
+{
+  "geo_level_1_id": {
+    "cardinality": 31,
+    "target_correlation": -0.07234663353698205,
+    "most_frequent": {
+      "6": 24381,
+      "26": 22615,
+      "10": 22079
+    },
+    "coverage_top_10": 72.2050183997759
+  },
+  "geo_level_2_id": {
+    "cardinality": 1414,
+    "target_correlation": 0.04316075695527345,
+    "most_frequent": {
+      "39": 4038,
+      "158": 2520,
+      "181": 2080
+    },
+    "coverage_top_10": 8.092447841719718
+  },
+  "geo_level_3_id": {
+    "cardinality": 11595,
+    "target_correlation": 0.00793177894218779,
+    "most_frequent": {
+      "633": 651,
+      "9133": 647,
+      "621": 530
+    },
+    "coverage_top_10": 1.8050583075275997
+  }
+}

@@ -1,0 +1,79 @@
+
+services:
+  # Servizio principale Richter Predictor
+  richter-predictor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: richter-predictor
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models:rw
+      - ./reports:/app/reports:rw
+      - ./tests:/app/tests:ro
+      - ./src:/app/src:ro
+    environment:
+      - PYTHONPATH=/app/src:/app/tests
+      - TF_CPP_MIN_LOG_LEVEL=2
+      - CUDA_VISIBLE_DEVICES=""
+      - PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+    working_dir: /app
+    stdin_open: true
+    tty: true
+
+  # Servizio per test automatici
+  richter-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: richter-tests
+    volumes:
+      - ./tests:/app/tests:ro
+      - ./src:/app/src:ro
+      - ./data:/app/data:ro
+    environment:
+      - PYTHONPATH=/app/src:/app/tests
+      - TF_CPP_MIN_LOG_LEVEL=2
+      - CUDA_VISIBLE_DEVICES=""
+    working_dir: /app
+    command: python tests/run_tests.py --ci
+    profiles:
+      - testing
+
+  # Servizio per submission automatica
+  richter-submission:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: richter-submission
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+      - ./submissions:/app/submissions:rw
+    environment:
+      - PYTHONPATH=/app/src
+      - TF_CPP_MIN_LOG_LEVEL=2
+    working_dir: /app
+    command: python create_submission_fixed.py
+    profiles:
+      - submission
+
+  # Servizio per training finale
+  richter-training:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: richter-training
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models:rw
+      - ./reports:/app/reports:rw
+      - ./src:/app/src:ro
+    environment:
+      - PYTHONPATH=/app/src
+      - TF_CPP_MIN_LOG_LEVEL=1
+      - CUDA_VISIBLE_DEVICES=0
+    working_dir: /app
+    command: python src/models/train_final_nested_cv.py
+    profiles:
+      - training

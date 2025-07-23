@@ -1,0 +1,258 @@
+{
+  "final_score": 1.0,
+  "final_std": 0.0,
+  "outer_scores": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "best_configs_per_fold": [
+    {
+      "fold": 1,
+      "best_config": "AdaptiveStrategy",
+      "inner_score": 1.0,
+      "outer_score": 1.0,
+      "all_config_scores": {
+        "AdaptiveStrategy": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": true
+          }
+        },
+        "AllEmbeddings": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": true,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": true
+          }
+        },
+        "Conservative": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": false,
+            "group_binary_correlated": false,
+            "outlier_detection": false
+          }
+        },
+        "NoOutlierDetection": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": false
+          }
+        }
+      }
+    },
+    {
+      "fold": 2,
+      "best_config": "AdaptiveStrategy",
+      "inner_score": 1.0,
+      "outer_score": 1.0,
+      "all_config_scores": {
+        "AdaptiveStrategy": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": true
+          }
+        },
+        "AllEmbeddings": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": true,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": true
+          }
+        },
+        "Conservative": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": false,
+            "group_binary_correlated": false,
+            "outlier_detection": false
+          }
+        },
+        "NoOutlierDetection": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": false
+          }
+        }
+      }
+    },
+    {
+      "fold": 3,
+      "best_config": "AdaptiveStrategy",
+      "inner_score": 1.0,
+      "outer_score": 1.0,
+      "all_config_scores": {
+        "AdaptiveStrategy": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": true
+          }
+        },
+        "AllEmbeddings": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": true,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": true
+          }
+        },
+        "Conservative": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": false,
+            "group_binary_correlated": false,
+            "outlier_detection": false
+          }
+        },
+        "NoOutlierDetection": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": false
+          }
+        }
+      }
+    },
+    {
+      "fold": 4,
+      "best_config": "AdaptiveStrategy",
+      "inner_score": 1.0,
+      "outer_score": 1.0,
+      "all_config_scores": {
+        "AdaptiveStrategy": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": true
+          }
+        },
+        "AllEmbeddings": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": true,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": true
+          }
+        },
+        "Conservative": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": false,
+            "group_binary_correlated": false,
+            "outlier_detection": false
+          }
+        },
+        "NoOutlierDetection": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": false
+          }
+        }
+      }
+    },
+    {
+      "fold": 5,
+      "best_config": "AdaptiveStrategy",
+      "inner_score": 1.0,
+      "outer_score": 1.0,
+      "all_config_scores": {
+        "AdaptiveStrategy": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": true
+          }
+        },
+        "AllEmbeddings": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": true,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": true
+          }
+        },
+        "Conservative": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": false,
+            "group_binary_correlated": false,
+            "outlier_detection": false
+          }
+        },
+        "NoOutlierDetection": {
+          "score": 1.0,
+          "std": 0.0,
+          "config": {
+            "force_embedding_categorical": false,
+            "add_binary_count": true,
+            "group_binary_correlated": true,
+            "outlier_detection": false
+          }
+        }
+      }
+    }
+  ],
+  "config_frequency": {
+    "AdaptiveStrategy": 5
+  },
+  "recommended_config": "AdaptiveStrategy",
+  "total_time_minutes": 0.590207056204478
+}

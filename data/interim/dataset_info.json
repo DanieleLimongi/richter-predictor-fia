@@ -1,0 +1,73 @@
+{
+  "created_by": "DatasetLoader",
+  "data_quality": {
+    "train_samples": 260601,
+    "total_features": 38,
+    "missing_values": {},
+    "duplicate_building_ids": 0,
+    "target_distribution": {
+      "1": 25124,
+      "2": 148259,
+      "3": 87218
+    }
+  },
+  "feature_mapping": {
+    "numeric_features": [
+      "age",
+      "area_percentage",
+      "height_percentage"
+    ],
+    "categorical_features": [
+      "count_floors_pre_eq",
+      "land_surface_condition",
+      "foundation_type",
+      "roof_type",
+      "ground_floor_type",
+      "other_floor_type",
+      "position",
+      "plan_configuration",
+      "legal_ownership_status",
+      "count_families"
+    ],
+    "geographic_features": [
+      "geo_level_1_id",
+      "geo_level_2_id",
+      "geo_level_3_id"
+    ],
+    "binary_features": [
+      "has_superstructure_adobe_mud",
+      "has_superstructure_mud_mortar_stone",
+      "has_superstructure_stone_flag",
+      "has_superstructure_cement_mortar_stone",
+      "has_superstructure_mud_mortar_brick",
+      "has_superstructure_cement_mortar_brick",
+      "has_superstructure_timber",
+      "has_superstructure_bamboo",
+      "has_superstructure_rc_non_engineered",
+      "has_superstructure_rc_engineered",
+      "has_superstructure_other",
+      "has_secondary_use",
+      "has_secondary_use_agriculture",
+      "has_secondary_use_hotel",
+      "has_secondary_use_rental",
+      "has_secondary_use_institution",
+      "has_secondary_use_school",
+      "has_secondary_use_industry",
+      "has_secondary_use_health_post",
+      "has_secondary_use_gov_office",
+      "has_secondary_use_use_police",
+      "has_secondary_use_other"
+    ],
+    "target_feature": "damage_grade"
+  },
+  "file_paths": {
+    "train": "data/interim/train_dataset.parquet",
+    "test": "PROTECTED - not loaded"
+  },
+  "notes": [
+    "Solo dati di training caricati",
+    "test_values.csv NON \u00e8 stato toccato",
+    "Usa train/validation split per sviluppo",
+    "test_values.csv sar\u00e0 usato SOLO per valutazione finale"
+  ]
+}

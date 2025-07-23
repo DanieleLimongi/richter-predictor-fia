@@ -1,0 +1,473 @@
+{
+  "geo_level_1_id": {
+    "dtype": "int64",
+    "unique_values": 31,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "geographic",
+    "sample_values": [
+      "6",
+      "8",
+      "21",
+      "22",
+      "11"
+    ]
+  },
+  "geo_level_2_id": {
+    "dtype": "int64",
+    "unique_values": 1414,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "geographic",
+    "sample_values": [
+      "487",
+      "900",
+      "363",
+      "418",
+      "131"
+    ]
+  },
+  "geo_level_3_id": {
+    "dtype": "int64",
+    "unique_values": 11595,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "geographic",
+    "sample_values": [
+      "12198",
+      "2812",
+      "8973",
+      "10694",
+      "1488"
+    ]
+  },
+  "count_floors_pre_eq": {
+    "dtype": "int64",
+    "unique_values": 9,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "categorical",
+    "sample_values": [
+      "2",
+      "3",
+      "1",
+      "4",
+      "5"
+    ]
+  },
+  "age": {
+    "dtype": "int64",
+    "unique_values": 42,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "numeric",
+    "sample_values": [
+      "30",
+      "10",
+      "25",
+      "0",
+      "15"
+    ]
+  },
+  "area_percentage": {
+    "dtype": "int64",
+    "unique_values": 84,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "numeric",
+    "sample_values": [
+      "6",
+      "8",
+      "5",
+      "9",
+      "3"
+    ]
+  },
+  "height_percentage": {
+    "dtype": "int64",
+    "unique_values": 27,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "numeric",
+    "sample_values": [
+      "5",
+      "7",
+      "9",
+      "4",
+      "6"
+    ]
+  },
+  "land_surface_condition": {
+    "dtype": "object",
+    "unique_values": 3,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "categorical",
+    "sample_values": [
+      "t",
+      "o",
+      "n"
+    ]
+  },
+  "foundation_type": {
+    "dtype": "object",
+    "unique_values": 5,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "categorical",
+    "sample_values": [
+      "r",
+      "w",
+      "i",
+      "u",
+      "h"
+    ]
+  },
+  "roof_type": {
+    "dtype": "object",
+    "unique_values": 3,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "categorical",
+    "sample_values": [
+      "n",
+      "q",
+      "x"
+    ]
+  },
+  "ground_floor_type": {
+    "dtype": "object",
+    "unique_values": 5,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "categorical",
+    "sample_values": [
+      "f",
+      "x",
+      "v",
+      "z",
+      "m"
+    ]
+  },
+  "other_floor_type": {
+    "dtype": "object",
+    "unique_values": 4,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "categorical",
+    "sample_values": [
+      "q",
+      "x",
+      "j",
+      "s"
+    ]
+  },
+  "position": {
+    "dtype": "object",
+    "unique_values": 4,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "categorical",
+    "sample_values": [
+      "t",
+      "s",
+      "j",
+      "o"
+    ]
+  },
+  "plan_configuration": {
+    "dtype": "object",
+    "unique_values": 10,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "categorical",
+    "sample_values": [
+      "d",
+      "u",
+      "s",
+      "q",
+      "m"
+    ]
+  },
+  "has_superstructure_adobe_mud": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "1",
+      "0"
+    ]
+  },
+  "has_superstructure_mud_mortar_stone": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "1",
+      "0"
+    ]
+  },
+  "has_superstructure_stone_flag": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_superstructure_cement_mortar_stone": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_superstructure_mud_mortar_brick": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_superstructure_cement_mortar_brick": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_superstructure_timber": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_superstructure_bamboo": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_superstructure_rc_non_engineered": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_superstructure_rc_engineered": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_superstructure_other": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "legal_ownership_status": {
+    "dtype": "object",
+    "unique_values": 4,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "categorical",
+    "sample_values": [
+      "v",
+      "a",
+      "r",
+      "w"
+    ]
+  },
+  "count_families": {
+    "dtype": "int64",
+    "unique_values": 10,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "categorical",
+    "sample_values": [
+      "1",
+      "0",
+      "2",
+      "3",
+      "4"
+    ]
+  },
+  "has_secondary_use": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_secondary_use_agriculture": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_secondary_use_hotel": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_secondary_use_rental": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_secondary_use_institution": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_secondary_use_school": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_secondary_use_industry": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_secondary_use_health_post": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_secondary_use_gov_office": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_secondary_use_use_police": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "has_secondary_use_other": {
+    "dtype": "int64",
+    "unique_values": 2,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "binary",
+    "sample_values": [
+      "0",
+      "1"
+    ]
+  },
+  "damage_grade": {
+    "dtype": "int64",
+    "unique_values": 3,
+    "missing_values": "0",
+    "missing_percent": 0.0,
+    "type": "target",
+    "sample_values": [
+      "3",
+      "2",
+      "1"
+    ]
+  }
+}

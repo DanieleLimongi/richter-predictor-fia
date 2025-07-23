@@ -12,7 +12,5 @@ venv_tf/
 # macOS
 .DS_Store
 **/.DS_Store
-#file dei pesi troppo grande S
-data/interim_tf/train_interim.tfrecord
-/data/interim_tf/train_interim.tfrecord
+
 
