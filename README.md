@@ -441,22 +441,6 @@ python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU')
 - Monitorare temperature GPU
 - Assicurarsi che TensorFlow utilizzi GPU (non CPU fallback)
 
-## Continuous Integration e Quality Assurance
-
-### GitHub Actions Pipeline
-La pipeline CI/CD include:
-- **Testing Multi-Platform**: Python 3.11 e 3.12
-- **Code Quality**: Linting, formatting, security scanning
-- **Performance Testing**: Benchmark automatici
-- **Docker Testing**: Validazione container
-- **Deployment**: Push automatico immagini Docker
-
-### Code Quality Standards
-- **Test Coverage**: >80% per componenti critici
-- **Performance Benchmarks**: Tracking regressioni performance
-- **Security Scanning**: Analisi vulnerabilità dipendenze
-- **Documentation**: Auto-generation documentazione API
-
 ## Conclusione 
 
 Il Richter Predictor rappresenta un sistema completo e tecnologicamente avanzato per la predizione dei danni strutturali causati da eventi sismici. L'architettura modulare, le ottimizzazioni hardware-aware e l'integrazione con l'ecosistema MLOps moderno lo rendono una soluzione robusta e scalabile per applicazioni reali di gestione dei disastri.
