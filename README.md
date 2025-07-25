@@ -19,8 +19,7 @@ richter-predictor-fia/
 ├── src/
 │   ├── data/
 │   │   ├── eda.py                   # Analisi esplorativa dei dati
-│   │   ├── data_analysis.py         # Analisi approfondita delle feature
-│   │   └── make_dataset_tf.py       # Pipeline di preprocessamento TensorFlow
+│   │   └── data_analysis.py         # Analisi approfondita delle feature
 │   ├── models/
 │   │   ├── train_final_nested_cv.py # Training con Nested Cross-Validation
 │   │   └── train_simple_holdout.py  # Training con validazione holdout
@@ -308,7 +307,7 @@ python src/data/eda.py
 
 #### 3. Preprocessamento Dati
 ```bash
-python src/data/make_dataset_tf.py
+python src/preprocessing/main_pipeline.py
 ```
 
 #### 4. Training Modello 
