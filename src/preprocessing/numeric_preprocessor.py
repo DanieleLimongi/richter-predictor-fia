@@ -10,6 +10,36 @@ from typing import Dict, List, Tuple, Optional
 import numpy as np
 from .base_preprocessor import BasePreprocessor
 
+# Import tensorflow_probability with fallback
+try:
+    import tensorflow_probability as tfp
+except ImportError:
+    print("  tensorflow_probability non disponibile. Outlier detection limitata.")
+    
+    # Fallback per percentile
+    def percentile_fallback(data, q):
+        """Fallback per calcolo percentili senza tfp"""
+        sorted_data = tf.sort(data)
+        n = tf.cast(tf.shape(sorted_data)[0], tf.float32)
+        index = (q / 100.0) * (n - 1)
+        lower_idx = tf.cast(tf.floor(index), tf.int32)
+        upper_idx = tf.minimum(lower_idx + 1, tf.cast(n - 1, tf.int32))
+        
+        lower_val = sorted_data[lower_idx]
+        upper_val = sorted_data[upper_idx]
+        weight = index - tf.cast(lower_idx, tf.float32)
+        
+        return lower_val + weight * (upper_val - lower_val)
+    
+    # Crea oggetto mock per tfp.stats
+    class MockTFP:
+        class stats:
+            @staticmethod
+            def percentile(data, q):
+                return percentile_fallback(data, q)
+    
+    tfp = MockTFP()
+
 
 class NumericPreprocessor(BasePreprocessor):
     """
@@ -246,35 +276,6 @@ class NumericPreprocessor(BasePreprocessor):
                 outputs[feature] = normalized
         
         return outputs
-    
-    def get_feature_statistics(self) -> Dict[str, Dict]:
-        """
-        Restituisce statistiche complete delle features.
-        
-        Returns:
-            Dict con statistiche per ogni feature
-        """
-        return {
-            'stats': self.stats,
-            'outlier_bounds': self.outlier_bounds,
-            'metadata': self.metadata
-        }
-    
-    def suggest_transformations(self) -> Dict[str, str]:
-        """
-        Suggerisce trasformazioni basate su analisi distribuzione.
-        
-        Returns:
-            Dict con {feature_name: transformation_suggestion}
-        """
-        suggestions = {}
-        
-        for feature in self.feature_names:
-            if f'{feature}_transform_suggestion' in self.metadata:
-                suggestions[feature] = self.metadata[f'{feature}_transform_suggestion']
-        
-        return suggestions
-
 
 # Importa tensorflow_probability se disponibile
 try:

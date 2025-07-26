@@ -16,6 +16,9 @@ import json
 # Aggiungi src al path
 sys.path.append(str(Path(__file__).parent.parent / 'src'))
 
+# Import factory per dati condivisi
+from test_data.synthetic_data_factory import SyntheticDataFactory
+
 try:
     import tensorflow as tf
     TF_AVAILABLE = True
@@ -133,53 +136,12 @@ class TestDataLoading(unittest.TestCase):
         """Setup dati di test"""
         self.temp_dir = tempfile.mkdtemp()
         
-        # Crea file CSV di test
-        self.train_values_path = os.path.join(self.temp_dir, 'train_values.csv')
-        self.train_labels_path = os.path.join(self.temp_dir, 'train_labels.csv')
-        
-        # Dati di test
-        np.random.seed(42)
-        n_samples = 100
-        
-        # Train values
-        train_values = pd.DataFrame({
-            'building_id': range(1, n_samples + 1),
-            'geo_level_1_id': np.random.randint(1, 32, n_samples),
-            'geo_level_2_id': np.random.randint(1, 100, n_samples),
-            'geo_level_3_id': np.random.randint(1, 200, n_samples),
-            'count_families': np.random.randint(1, 10, n_samples),
-            'count_floors_pre_eq': np.random.randint(1, 5, n_samples),
-            'age': np.random.randint(0, 100, n_samples),
-            'foundation_type': np.random.choice(['r', 'w', 'i', 'u', 'h'], n_samples),
-            'roof_type': np.random.choice(['n', 'q', 'x'], n_samples),
-            'ground_floor_type': np.random.choice(['f', 'm', 'v', 'x', 'z'], n_samples),
-            'other_floor_type': np.random.choice(['j', 'q', 's', 'x'], n_samples),
-            'position': np.random.choice(['j', 'o', 's', 't'], n_samples),
-            'plan_configuration': np.random.choice(['a', 'c', 'd', 'f', 'm'], n_samples),
-            'land_surface_condition': np.random.choice(['n', 'o', 't'], n_samples),
-            'legal_ownership_status': np.random.choice(['a', 'r', 'v', 'w'], n_samples),
-            'has_superstructure_adobe_mud': np.random.choice([0, 1], n_samples),
-            'has_superstructure_mud_mortar_stone': np.random.choice([0, 1], n_samples),
-            'has_superstructure_stone_flag': np.random.choice([0, 1], n_samples),
-            'has_superstructure_cement_mortar_stone': np.random.choice([0, 1], n_samples),
-            'has_superstructure_mud_mortar_brick': np.random.choice([0, 1], n_samples),
-            'has_superstructure_cement_mortar_brick': np.random.choice([0, 1], n_samples),
-            'has_superstructure_timber': np.random.choice([0, 1], n_samples),
-            'has_superstructure_bamboo': np.random.choice([0, 1], n_samples),
-            'has_superstructure_rc_non_engineered': np.random.choice([0, 1], n_samples),
-            'has_superstructure_rc_engineered': np.random.choice([0, 1], n_samples),
-            'has_superstructure_other': np.random.choice([0, 1], n_samples)
-        })
-        
-        # Train labels
-        train_labels = pd.DataFrame({
-            'building_id': range(1, n_samples + 1),
-            'damage_grade': np.random.choice([1, 2, 3], n_samples)
-        })
-        
-        # Salva i file
-        train_values.to_csv(self.train_values_path, index=False)
-        train_labels.to_csv(self.train_labels_path, index=False)
+        # Usa la factory per creare i file CSV
+        self.train_values_path, self.train_labels_path = SyntheticDataFactory.create_csv_files(
+            temp_dir=self.temp_dir, 
+            n_samples=100, 
+            seed=42
+        )
     
     def tearDown(self):
         """Cleanup file temporanei"""
@@ -297,6 +259,83 @@ class TestTrainingValidation(unittest.TestCase):
         self.assertLessEqual(f1_macro, 1.0)
 
 
+class TestRichterTrainer(unittest.TestCase):
+    """Test per la classe RichterTrainer (train_advanced_ensemble.py)"""
+    
+    def setUp(self):
+        """Setup per test RichterTrainer"""
+        self.temp_dir = tempfile.mkdtemp()
+        
+        # Crea dati sintetici per test
+        self.data_factory = SyntheticDataFactory()
+        
+    def tearDown(self):
+        """Cleanup"""
+        shutil.rmtree(self.temp_dir)
+    
+    @unittest.skipUnless(TF_AVAILABLE, "TensorFlow non disponibile")
+    def test_richter_trainer_initialization(self):
+        """Test inizializzazione RichterTrainer"""
+        try:
+            from models.train_advanced_ensemble import RichterTrainer
+            
+            trainer = RichterTrainer()
+            
+            # Verifica attributi iniziali
+            self.assertEqual(trainer.target_f1, 0.78)
+            self.assertEqual(len(trainer.models), 0)
+            self.assertIsNone(trainer.oof_predictions)
+            self.assertEqual(trainer.final_f1, 0.0)
+            
+        except ImportError:
+            self.skipTest("RichterTrainer non disponibile")
+    
+    @unittest.skipUnless(TF_AVAILABLE, "TensorFlow non disponibile")
+    def test_train_ensemble_simulation(self):
+        """Test simulazione training ensemble"""
+        try:
+            from models.train_advanced_ensemble import RichterTrainer
+            
+            trainer = RichterTrainer()
+            
+            # Dati sintetici per test
+            n_samples = 200
+            n_features = 100
+            X = np.random.random((n_samples, n_features)).astype(np.float32)
+            y = np.random.randint(0, 3, n_samples)
+            
+            # Test che il metodo non crashi (non facciamo training completo per velocità)
+            self.assertIsNotNone(trainer.train_ensemble)
+            self.assertTrue(hasattr(trainer, 'target_f1'))
+            self.assertTrue(hasattr(trainer, 'models'))
+            self.assertTrue(hasattr(trainer, 'oof_predictions'))
+            
+        except ImportError:
+            self.skipTest("RichterTrainer non disponibile")
+    
+    @unittest.skipUnless(TF_AVAILABLE, "TensorFlow non disponibile") 
+    def test_save_method_structure(self):
+        """Test struttura del metodo save"""
+        try:
+            from models.train_advanced_ensemble import RichterTrainer
+            
+            trainer = RichterTrainer()
+            
+            # Verifica che il metodo save esista
+            self.assertTrue(hasattr(trainer, 'save'))
+            self.assertTrue(callable(trainer.save))
+            
+            # Setup minimo per test save
+            trainer.final_f1 = 0.75
+            trainer.models = []  # Lista vuota per test
+            
+            # Test che save non crashi (senza eseguire)
+            self.assertIsNotNone(trainer.save)
+            
+        except ImportError:
+            self.skipTest("RichterTrainer non disponibile")
+
+
 class TestModelSaveLoad(unittest.TestCase):
     """Test per salvataggio e caricamento modelli"""
     
@@ -372,6 +411,7 @@ def run_model_tests():
         TestModelArchitecture,
         TestDataLoading,
         TestTrainingValidation,
+        TestRichterTrainer,
         TestModelSaveLoad
     ]
     

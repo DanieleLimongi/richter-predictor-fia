@@ -17,6 +17,9 @@ warnings.filterwarnings('ignore')
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
+# Import factory per dati condivisi
+from test_data.synthetic_data_factory import SyntheticDataFactory
+
 from src.models.ensemble_architectures import EnsembleArchitectures
 
 class TestEnsembleArchitectures(unittest.TestCase):
@@ -28,8 +31,8 @@ class TestEnsembleArchitectures(unittest.TestCase):
         self.n_classes = 3    # 3 livelli di damage
         self.ensemble = EnsembleArchitectures(self.input_dim, self.n_classes)
         
-        # Dati di test
-        np.random.seed(42)
+        # Usa factory per dati di test consistenti
+        self.data_factory = SyntheticDataFactory()
         self.X_test = np.random.randn(50, self.input_dim).astype(np.float32)
         self.y_test = np.random.randint(0, 3, 50)
     
@@ -303,12 +306,9 @@ def run_ensemble_tests():
     
     print("=" * 70)
     
-    return result
+    return result.wasSuccessful()
 
 
 if __name__ == "__main__":
-    result = run_ensemble_tests()
-    
-    # Exit code per CI/CD
-    exit_code = 0 if (len(result.failures) == 0 and len(result.errors) == 0) else 1
-    sys.exit(exit_code)
+    success = run_ensemble_tests()
+    sys.exit(0 if success else 1)
