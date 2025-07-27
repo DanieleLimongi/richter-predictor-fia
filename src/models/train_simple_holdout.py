@@ -1,144 +1,79 @@
 #!/usr/bin/env python3
 """
-Training MLP semplice per Richter Predictor
-Utilizza pipeline di preprocessing completa + GPU ottimizzata
+Training MLP semplice per Richter Predictor - REFACTORED
+Utilizza componenti modulari esistenti eliminando duplicazioni
 """
 
 import os
 import sys
-import pandas as pd
 import numpy as np
 import tensorflow as tf
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, f1_score
 import json
 import pickle
 from datetime import datetime
+from pathlib import Path
 import warnings
 warnings.filterwarnings('ignore')
 
-# Aggiungi path per import preprocessing
-sys.path.append('/home/claudio/richter-predictor-fia/src')
-from preprocessing.main_pipeline import RichterPreprocessingPipeline
+# Setup path dinamico
+project_root = Path(__file__).parent.parent.parent
+sys.path.append(str(project_root / 'src'))
 
-# Configurazione GPU/CPU ottimizzata
+# Import componenti modulari esistenti
+from feature_engineering import AdvancedFeatureEngineer
+from data.data_analysis import DataAnalyzer
+from models.ensemble_architectures import EnsembleArchitectures
+
+# Configurazione TensorFlow ottimizzata
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-tf.config.optimizer.set_jit(True)  # XLA compilation
-
-# Usa tutte le GPU disponibili
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-    try:
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-        print(f" GPU trovate: {len(gpus)}")
-    except RuntimeError as e:
-        print(f"Errore GPU: {e}")
-
-# Thread optimization
-tf.config.threading.set_inter_op_parallelism_threads(0)
-tf.config.threading.set_intra_op_parallelism_threads(0)
+tf.get_logger().setLevel('ERROR')
 
 def load_and_preprocess_data():
-    """Carica dati raw e applica pipeline di preprocessing completa"""
-    print(" Caricamento dati raw...")
+    """Carica dati usando DataAnalyzer e applica feature engineering modulare"""
+    print("📊 Caricamento dati tramite DataAnalyzer...")
     
-    # Carica dati raw
-    train_values = pd.read_csv('/home/claudio/richter-predictor-fia/data/raw/train_values.csv')
-    train_labels = pd.read_csv('/home/claudio/richter-predictor-fia/data/raw/train_labels.csv')
+    # Usa DataAnalyzer esistente invece di duplicare logica
+    analyzer = DataAnalyzer()
+    train_df = analyzer.load_data()
     
-    # Merge training data
-    train_df = train_values.merge(train_labels, on='building_id', how='inner')
+    print(f"   Dati caricati: {train_df.shape[0]} samples, {train_df.shape[1]} features")
     
-    print(f" Dati raw caricati: {train_df.shape[0]} samples, {train_df.shape[1]} features")
-    
-    # Separa features e target
+    # Separazione features e target tramite DataAnalyzer
     feature_cols = [col for col in train_df.columns if col not in ['building_id', 'damage_grade']]
     X_df = train_df[feature_cols]
-    y = train_df['damage_grade'] - 1  # Convert to 0-2 for model
+    y = (train_df['damage_grade'] - 1).astype(np.int32)  # Convert to 0-2
     
-    print(" Usando configurazione AdaptiveStrategy (validata da Nested K-Fold)")
-    print(" Inizializzazione pipeline di preprocessing...")
+    print("🔧 Applicazione feature engineering modulare...")
     
-    # Inizializza pipeline senza config path (creeremo manualmente)
-    pipeline = RichterPreprocessingPipeline()
+    # Feature engineering con architettura modulare
+    engineer = AdvancedFeatureEngineer()
+    X_enhanced = engineer.fit_transform(X_df)
     
-    # Setup con configurazione AdaptiveStrategy validata
-    pipeline.setup_preprocessors(
-        force_embedding_categorical=False,  # AdaptiveStrategy
-        add_binary_count=True,             # AdaptiveStrategy  
-        group_binary_correlated=True,      # AdaptiveStrategy
-        outlier_detection=True             # AdaptiveStrategy
-    )
+    # Conversione ottimizzata
+    X = X_enhanced.values.astype(np.float32)
     
-    # Converti DataFrame in dict di tensori per la pipeline
-    data_dict = {}
-    for col in X_df.columns:
-        if X_df[col].dtype == 'object':
-            # Categorical features
-            data_dict[col] = tf.constant(X_df[col].astype(str).values)
-        else:
-            # Numeric features
-            data_dict[col] = tf.constant(X_df[col].astype(np.float32).values)
+    print(f"✅ Feature engineering completato!")
+    print(f"   Shape finale: {X.shape}")
+    print(f"   Features create: +{len(X_enhanced.columns) - len(X_df.columns)}")
+    print(f"   Target distribution: {np.bincount(y)}")
     
-    print(" Fitting pipeline sui dati di training...")
-    
-    # Fit della pipeline
-    pipeline.fit(data_dict)
-    
-    print(" Trasformazione dati...")
-    
-    # Transform dei dati
-    X_transformed = pipeline.transform(data_dict)
-    
-    # Converti il risultato in array numpy per sklearn
-    # Concatena tutte le features trasformate
-    feature_arrays = []
-    for key, tensor in X_transformed.items():
-        if len(tensor.shape) == 1:
-            feature_arrays.append(tensor.numpy().reshape(-1, 1))
-        else:
-            feature_arrays.append(tensor.numpy())
-    
-    X = np.concatenate(feature_arrays, axis=1).astype(np.float32)
-    y = y.astype(np.int32)
-    
-    print(f" Preprocessing completato!")
-    print(f" Shape finale: {X.shape}")
-    print(f" Target distribution: {np.bincount(y)}")
-    
-    return X, y, pipeline
+    return X, y, engineer
 
-def create_optimized_mlp(input_dim, num_classes=3):
-    """Crea MLP ottimizzata per GPU"""
+def create_model_from_ensemble_architectures(input_dim, architecture='regularized', num_classes=3):
+    """Crea modello usando EnsembleArchitectures esistente"""
+    print(f"🏗️  Creazione modello '{architecture}' tramite EnsembleArchitectures...")
     
-    model = tf.keras.Sequential([
-        # Input layer con normalizzazione
-        tf.keras.layers.Input(shape=(input_dim,)),
-        tf.keras.layers.BatchNormalization(),
-        
-        # Hidden layers con dropout
-        tf.keras.layers.Dense(512, activation='relu'),
-        tf.keras.layers.Dropout(0.3),
-        tf.keras.layers.BatchNormalization(),
-        
-        tf.keras.layers.Dense(256, activation='relu'),
-        tf.keras.layers.Dropout(0.2),
-        tf.keras.layers.BatchNormalization(),
-        
-        tf.keras.layers.Dense(128, activation='relu'),
-        tf.keras.layers.Dropout(0.1),
-        
-        # Output layer
-        tf.keras.layers.Dense(num_classes, activation='softmax')
-    ])
+    # Usa architettura esistente invece di duplicare
+    ensemble = EnsembleArchitectures(input_dim, num_classes)
+    model = ensemble.create_architecture(architecture)
     
-    # Optimizer ottimizzato
+    # Compilazione ottimizzata
     optimizer = tf.keras.optimizers.Adam(
         learning_rate=0.001,
         beta_1=0.9,
-        beta_2=0.999,
-        epsilon=1e-7
+        beta_2=0.999
     )
     
     model.compile(
@@ -147,15 +82,22 @@ def create_optimized_mlp(input_dim, num_classes=3):
         metrics=['accuracy']
     )
     
+    print(f"   Architettura: {architecture}")
+    print(f"   Parametri: {model.count_params():,}")
+    
     return model
 
 def main():
-    """Training principale"""
-    print(" RICHTER PREDICTOR - MLP TRAINING CON PREPROCESSING COMPLETO")
+    """Training principale con componenti modulari"""
+    print("🚀 RICHTER PREDICTOR - MLP TRAINING REFACTORED")
     print("=" * 60)
+    print("   ✅ Usa DataAnalyzer per data loading")
+    print("   ✅ Usa EnsembleArchitectures per modello")
+    print("   ✅ Path dinamici e configurazione centralizzata")
+    print()
     
-    # Carica e preprocessa dati
-    X, y, preprocessing_pipeline = load_and_preprocess_data()
+    # Carica e preprocessa dati con componenti esistenti
+    X, y, feature_engineer = load_and_preprocess_data()
     
     # HOLDOUT: Prima separa il test set finale (mai visto dal modello)
     X_work, X_holdout, y_work, y_holdout = train_test_split(
@@ -167,33 +109,34 @@ def main():
         X_work, y_work, test_size=0.2, random_state=42, stratify=y_work
     )
     
-    print(f" Train: {X_train.shape[0]} | Val: {X_val.shape[0]} | Holdout: {X_holdout.shape[0]}")
-    print(f" Split: {X_train.shape[0]/len(X)*100:.1f}% train | {X_val.shape[0]/len(X)*100:.1f}% val | {X_holdout.shape[0]/len(X)*100:.1f}% holdout")
+    print(f"📊 Split dati:")
+    print(f"   Train: {X_train.shape[0]} | Val: {X_val.shape[0]} | Holdout: {X_holdout.shape[0]}")
+    print(f"   Percentuali: {X_train.shape[0]/len(X)*100:.1f}% train | {X_val.shape[0]/len(X)*100:.1f}% val | {X_holdout.shape[0]/len(X)*100:.1f}% holdout")
+    print()
     
-    # Crea modello
-    model = create_optimized_mlp(X_train.shape[1])
-    print(f" Modello creato: {model.count_params():,} parametri")
+    # Crea modello usando EnsembleArchitectures esistente
+    model = create_model_from_ensemble_architectures(X_train.shape[1], 'regularized')
     
-    # Callbacks ULTRA-PAZIENTI per training esteso
+    # Callbacks ottimizzati
     callbacks = [
         tf.keras.callbacks.EarlyStopping(
             monitor='val_accuracy',
-            patience=50,  #  Doppia pazienza
+            patience=50,
             restore_best_weights=True,
-            min_delta=0.00005  #  Soglia ancora più fine
+            min_delta=0.00005
         ),
         tf.keras.callbacks.ReduceLROnPlateau(
-            monitor='val_accuracy',  # Monitora accuracy
-            factor=0.8,  #  Riduzione ancora più graduale (80% del precedente)
-            patience=35,  #  Più pazienza prima di ridurre
-            min_lr=1e-9,  #  LR minimo ultra-basso
-            mode='max',  # Massimizza accuracy
+            monitor='val_accuracy',
+            factor=0.8,
+            patience=35,
+            min_lr=1e-9,
+            mode='max',
             verbose=1
         )
     ]
     
     # Training
-    print("\n Inizio training...")
+    print("🏃 Inizio training...")
     history = model.fit(
         X_train, y_train,
         batch_size=1024,  # Batch size grande per GPU
@@ -204,32 +147,45 @@ def main():
     )
     
     # Valutazione finale su holdout (mai visto dal modello)
-    print("\n Valutazione finale su holdout...")
+    print("\n🎯 Valutazione finale su holdout...")
     y_pred_holdout = model.predict(X_holdout, batch_size=2048, verbose=0)
     y_pred_holdout_classes = np.argmax(y_pred_holdout, axis=1)
     
     holdout_accuracy = accuracy_score(y_holdout, y_pred_holdout_classes)
     holdout_f1 = f1_score(y_holdout, y_pred_holdout_classes, average='weighted')
     
-    print(f" Holdout Accuracy (stima non distorta): {holdout_accuracy:.4f}")
-    print(f" Holdout F1-Score: {holdout_f1:.4f}")
+    print(f"📈 Risultati finali:")
+    print(f"   Holdout Accuracy: {holdout_accuracy:.4f}")
+    print(f"   Holdout F1-Score: {holdout_f1:.4f}")
     
     # Report dettagliato
-    print("\n Classification Report (Holdout):")
+    print("\n📊 Classification Report (Holdout):")
     print(classification_report(y_holdout, y_pred_holdout_classes, 
                               target_names=['Grade 1', 'Grade 2', 'Grade 3']))
     
-    # Salva modello e pipeline
+    # Salvataggio con path dinamici
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    model_path = f'/home/claudio/richter-predictor-fia/models/mlp_model_full_preprocessing_{timestamp}.keras'
-    pipeline_path = f'/home/claudio/richter-predictor-fia/models/preprocessing_pipeline_{timestamp}.pkl'
+    
+    # Path dinamici basati su project_root
+    models_dir = project_root / 'models'
+    reports_dir = project_root / 'reports' / 'mlp_results'
+    
+    # Assicura che le directory esistano
+    models_dir.mkdir(parents=True, exist_ok=True)
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Path dei file
+    model_path = models_dir / f'mlp_model_refactored_{timestamp}.keras'
+    engineer_path = models_dir / f'feature_engineer_{timestamp}.pkl'
+    
+    print(f"\n💾 Salvataggio modello e pipeline...")
     
     # Salva modello
-    model.save(model_path)
+    model.save(str(model_path))
     
-    # Salva pipeline di preprocessing
-    with open(pipeline_path, 'wb') as f:
-        pickle.dump(preprocessing_pipeline, f)
+    # Salva feature engineer
+    with open(engineer_path, 'wb') as f:
+        pickle.dump(feature_engineer, f)
     
     # Salva risultati
     results = {
@@ -240,9 +196,10 @@ def main():
         'val_samples': int(X_val.shape[0]),
         'holdout_samples': int(X_holdout.shape[0]),
         'features_count': int(X_train.shape[1]),
-        'model_path': model_path,
-        'preprocessing_pipeline_path': pipeline_path,
-        'used_full_preprocessing': True,
+        'model_path': str(model_path),
+        'feature_engineer_path': str(engineer_path),
+        'used_modular_components': True,
+        'refactored_version': True,
         'holdout_split': True,
         'training_history': {
             'loss': [float(x) for x in history.history['loss']],
@@ -252,16 +209,18 @@ def main():
         }
     }
     
-    results_path = f'/home/claudio/richter-predictor-fia/reports/mlp_results/full_preprocessing_results_{timestamp}.json'
+    results_path = reports_dir / f'refactored_results_{timestamp}.json'
     with open(results_path, 'w') as f:
         json.dump(results, f, indent=2)
     
-    print(f" Modello salvato: {model_path}")
-    print(f" Pipeline salvata: {pipeline_path}")
-    print(f" Risultati salvati: {results_path}")
-    print("\n Training con preprocessing completo completato!")
+    print(f"   ✅ Modello salvato: {model_path}")
+    print(f"   ✅ Feature Engineer salvato: {engineer_path}")
+    print(f"   ✅ Risultati salvati: {results_path}")
+    print("\n🎉 Training refactored completato con successo!")
+    print("   🔄 Eliminazione duplicazioni completata")
+    print("   📦 Riutilizzo componenti modulari attivato")
     
-    return model, preprocessing_pipeline, results
+    return model, feature_engineer, results
 
 if __name__ == "__main__":
-    model, pipeline, results = main()
+    model, engineer, results = main()

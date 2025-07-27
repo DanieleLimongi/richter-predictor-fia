@@ -21,8 +21,8 @@ warnings.filterwarnings('ignore')
 
 # Import dei componenti da testare
 from data.data_analysis import DataAnalyzer
-from feature_engineering.advanced_features import AdvancedFeatureEngineer
-from preprocessing.main_pipeline import RichterPreprocessingPipeline
+from feature_engineering import AdvancedFeatureEngineer
+from feature_engineering import AdvancedFeatureEngineer as MainFeatureEngineer
 from models.ensemble_architectures import EnsembleArchitectures
 
 class TestRichterIntegration(unittest.TestCase):
@@ -84,7 +84,7 @@ class TestRichterIntegration(unittest.TestCase):
         print("      Integration Test 2: AdvancedFeatureEngineer")
         
         # Setup feature engineer
-        engineer = AdvancedFeatureEngineer(target_encoding_smoothing=100)
+        engineer = AdvancedFeatureEngineer()
         
         # Test fit_transform
         df_enhanced = engineer.fit_transform(self.test_data, 'damage_grade')
@@ -103,74 +103,44 @@ class TestRichterIntegration(unittest.TestCase):
         
         return df_enhanced
     
-    def test_03_preprocessing_integration(self):
-        """Test RichterPreprocessingPipeline integration"""
-        print("      Integration Test 3: RichterPreprocessingPipeline")
-        
-        # Get enhanced data
-        engineer = AdvancedFeatureEngineer()
-        df_enhanced = engineer.fit_transform(self.test_data, 'damage_grade')
+    def test_03_new_feature_engineering_integration(self):
+        """Test new modular feature engineering integration"""
+        print("      Integration Test 3: New Feature Engineering Integration")
         
         try:
-            # Setup preprocessing pipeline
-            pipeline = RichterPreprocessingPipeline()
-            pipeline.setup_preprocessors(
-                force_embedding_categorical=False,
-                add_binary_count=True,
-                group_binary_correlated=True,
-                outlier_detection=True
-            )
+            # Use new modular feature engineering
+            engineer = MainFeatureEngineer()
+            df_enhanced = engineer.fit_transform(self.test_data, 'damage_grade')
             
-            # Prepare data for pipeline
+            # Simple preprocessing (what the new architecture already handles)
             y = df_enhanced['damage_grade'].values - 1
             X_df = df_enhanced.drop(['damage_grade', 'building_id'], axis=1, errors='ignore')
             
-            # Convert to tensors
-            import tensorflow as tf
-            data_dict = {}
+            # Ensure all columns are numeric
             for col in X_df.columns:
-                if pd.api.types.is_numeric_dtype(X_df[col]):
-                    values = X_df[col].fillna(0.0).replace([np.inf, -np.inf], 0.0)
-                    data_dict[col] = tf.constant(values.astype(np.float32))
-                else:
-                    data_dict[col] = tf.constant(X_df[col].astype(str).values)
+                if not pd.api.types.is_numeric_dtype(X_df[col]):
+                    X_df[col] = pd.to_numeric(X_df[col], errors='coerce')
             
-            # Test fit and transform
-            pipeline.fit(data_dict)
-            processed = pipeline.transform(data_dict)
+            # Clean data
+            X_df = X_df.fillna(0.0).replace([np.inf, -np.inf], 0.0)
             
-            # Verifica output
-            self.assertIsInstance(processed, dict)
-            self.assertGreater(len(processed), 0)
+            # Convert to numpy
+            X_final = X_df.values.astype(np.float32)
             
-            # Test aggregation
-            feature_arrays = []
-            for tensor in processed.values():
-                np_array = tensor.numpy()
-                if len(np_array.shape) > 1:
-                    np_array = np_array.reshape(np_array.shape[0], -1)
-                else:
-                    np_array = np_array.reshape(-1, 1)
-                feature_arrays.append(np_array)
-            
-            X_final = np.concatenate(feature_arrays, axis=1).astype(np.float32)
-            X_final = np.nan_to_num(X_final)
-            
-            # Verifica risultato finale
+            # Verifica risultato
             self.assertEqual(X_final.shape[0], len(self.test_data))
             self.assertGreater(X_final.shape[1], 0)
             self.assertFalse(np.isnan(X_final).any())
             self.assertFalse(np.isinf(X_final).any())
             
-            print(f"         Processed shape: {X_final.shape}")
-            print("         RichterPreprocessingPipeline integration OK")
+            print(f"         Enhanced features: {len(self.test_data.columns)} -> {len(df_enhanced.columns)}")
+            print(f"         Final shape: {X_final.shape}")
+            print("         New Feature Engineering integration OK")
             
             return X_final, y
             
         except Exception as e:
-            # Fallback test
-            print(f"         WARNING: Professional preprocessing failed: {e}")
-            print("         Fallback preprocessing test OK")
+            print(f"         ERROR: New feature engineering failed: {e}")
             return None, None
     
     def test_04_ensemble_architectures_integration(self):
@@ -221,58 +191,23 @@ class TestRichterIntegration(unittest.TestCase):
             df_enhanced = engineer.fit_transform(self.test_data, 'damage_grade')
             self.assertGreater(len(df_enhanced.columns), len(self.test_data.columns))
             
-            # Step 2: Preprocessing (con fallback)
-            try:
-                # Professional preprocessing
-                pipeline = RichterPreprocessingPipeline()
-                pipeline.setup_preprocessors()
-                
-                y = df_enhanced['damage_grade'].values - 1
-                X_df = df_enhanced.drop(['damage_grade', 'building_id'], axis=1, errors='ignore')
-                
-                import tensorflow as tf
-                data_dict = {}
-                for col in X_df.columns:
-                    if pd.api.types.is_numeric_dtype(X_df[col]):
-                        values = X_df[col].fillna(0.0).replace([np.inf, -np.inf], 0.0)
-                        data_dict[col] = tf.constant(values.astype(np.float32))
-                    else:
-                        data_dict[col] = tf.constant(X_df[col].astype(str).values)
-                
-                pipeline.fit(data_dict)
-                processed = pipeline.transform(data_dict)
-                
-                # Aggregate features
-                arrays = []
-                for tensor in processed.values():
-                    np_array = tensor.numpy()
-                    if len(np_array.shape) > 1:
-                        np_array = np_array.reshape(np_array.shape[0], -1)
-                    else:
-                        np_array = np_array.reshape(-1, 1)
-                    arrays.append(np_array)
-                
-                X = np.concatenate(arrays, axis=1).astype(np.float32)
-                X = np.nan_to_num(X)
-                
-                preprocessing_method = "Professional"
-                
-            except:
-                # Fallback preprocessing
-                y = df_enhanced['damage_grade'].values - 1
-                X_df = df_enhanced.drop(['damage_grade', 'building_id'], axis=1, errors='ignore')
-                
-                for col in X_df.columns:
-                    if not pd.api.types.is_numeric_dtype(X_df[col]):
-                        X_df[col] = pd.to_numeric(X_df[col], errors='coerce')
-                
-                X_df = X_df.fillna(0.0).replace([np.inf, -np.inf], 0.0)
-                
-                from sklearn.preprocessing import StandardScaler
-                scaler = StandardScaler()
-                X = scaler.fit_transform(X_df).astype(np.float32)
-                
-                preprocessing_method = "Fallback"
+            # Step 2: Simple data preparation (new architecture handles feature engineering)
+            y = df_enhanced['damage_grade'].values - 1
+            X_df = df_enhanced.drop(['damage_grade', 'building_id'], axis=1, errors='ignore')
+            
+            # Ensure all columns are numeric
+            for col in X_df.columns:
+                if not pd.api.types.is_numeric_dtype(X_df[col]):
+                    X_df[col] = pd.to_numeric(X_df[col], errors='coerce')
+            
+            X_df = X_df.fillna(0.0).replace([np.inf, -np.inf], 0.0)
+            
+            # Optional scaling
+            from sklearn.preprocessing import StandardScaler
+            scaler = StandardScaler()
+            X = scaler.fit_transform(X_df).astype(np.float32)
+            
+            preprocessing_method = "New Modular Architecture"
             
             # Step 3: Model Creation and Training Simulation
             ensemble = EnsembleArchitectures(X.shape[1], 3)
@@ -305,7 +240,7 @@ class TestRichterIntegration(unittest.TestCase):
             np.testing.assert_allclose(prob_sums, 1.0, rtol=1e-5)
             
             print(f"         Data flow: {self.test_data.shape} -> {df_enhanced.shape} -> {X.shape}")
-            print(f"         Preprocessing: {preprocessing_method}")
+            print(f"         Processing: {preprocessing_method}")
             print(f"         Model: {arch_name} trained and tested")
             print("         End-to-End Pipeline integration OK")
             

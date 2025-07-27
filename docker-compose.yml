@@ -1,60 +1,253 @@
 
+version: '3.8'
+
 services:
-  # Servizio principale Richter Predictor
+  #  Servizio principale Richter Predictor FIA
   richter-predictor:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: richter-predictor
+      args:
+        - PYTHON_VERSION=3.12
+        - TF_VERSION=2.18.0
+    container_name: richter-predictor-fia
+    image: richter-predictor:latest
     volumes:
+      # Data volumes (read-only per sicurezza)
       - ./data:/app/data:ro
-      - ./models:/app/models:rw
       - ./reports:/app/reports:rw
-      - ./tests:/app/tests:ro
+      
+      # Code volumes (read-only per produzione)
       - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      
+      # Output volumes (read-write)
+      - ./models:/app/models:rw
+      - ./submissions:/app/submissions:rw
+      - ./logs:/app/logs:rw
+      
+      # Cache volumes per performance
+      - richter_cache:/app/.cache
+      - richter_tensorflow_cache:/root/.keras
     environment:
+      # Python configuration
       - PYTHONPATH=/app/src:/app/tests
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      
+      # TensorFlow optimization
       - TF_CPP_MIN_LOG_LEVEL=2
-      - CUDA_VISIBLE_DEVICES=""
+      - TF_ENABLE_ONEDNN_OPTS=1
+      - TF_FORCE_GPU_ALLOW_GROWTH=true
+      
+      # GPU configuration (modifiable at runtime)
+      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-""}
+      
+      # Project-specific
+      - RICHTER_MODE=interactive
+      - RICHTER_BATCH_SIZE=${RICHTER_BATCH_SIZE:-2048}
+      - RICHTER_MAX_EPOCHS=${RICHTER_MAX_EPOCHS:-200}
+      
+      # Testing configuration
       - PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
     working_dir: /app
     stdin_open: true
     tty: true
+    restart: unless-stopped
+    networks:
+      - richter-network
+    deploy:
+      resources:
+        limits:
+          memory: ${RICHTER_MEMORY_LIMIT:-8G}
+        reservations:
+          memory: 2G
 
-  # Servizio per test automatici
+  #  Servizio per test automatici completi
   richter-tests:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: richter-tests
+    container_name: richter-tests-fia
+    image: richter-predictor:latest
     volumes:
       - ./tests:/app/tests:ro
       - ./src:/app/src:ro
       - ./data:/app/data:ro
+      - ./reports:/app/reports:rw
+      - ./logs:/app/logs:rw
     environment:
       - PYTHONPATH=/app/src:/app/tests
       - TF_CPP_MIN_LOG_LEVEL=2
-      - CUDA_VISIBLE_DEVICES=""
+      - CUDA_VISIBLE_DEVICES=""  # CPU-only per tests
+      - RICHTER_MODE=testing
+      - RICHTER_TEST_TIMEOUT=1800  # 30 minuti timeout
     working_dir: /app
     command: python tests/run_tests.py --ci
     profiles:
       - testing
+    networks:
+      - richter-network
+    deploy:
+      resources:
+        limits:
+          memory: 6G
 
-  # Servizio per submission automatica
+  #  Servizio per submission automatica
   richter-submission:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: richter-submission
+    container_name: richter-submission-fia
+    image: richter-predictor:latest
     volumes:
       - ./data:/app/data:ro
       - ./models:/app/models:ro
-      - ./reports:/app/reports:rw
+      - ./src:/app/src:ro
+      - ./submissions:/app/submissions:rw
+      - ./logs:/app/logs:rw
     environment:
       - PYTHONPATH=/app/src
       - TF_CPP_MIN_LOG_LEVEL=2
+      - CUDA_VISIBLE_DEVICES=""  # CPU per inference
+      - RICHTER_MODE=submission
     working_dir: /app
-    command: echo "Please add submission script or use available models"
+    command: python src/create_submission.py --model_type=best --format=drivendata
+    profiles:
+      - submission
+    networks:
+      - richter-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  #  Servizio per training ensemble con Nested CV
+  richter-training-nested:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: richter-training-nested
+    image: richter-predictor:latest
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models:rw
+      - ./reports:/app/reports:rw
+      - ./src:/app/src:ro
+      - ./logs:/app/logs:rw
+      - richter_tensorflow_cache:/root/.keras
+    environment:
+      - PYTHONPATH=/app/src
+      - TF_CPP_MIN_LOG_LEVEL=1  # Più verboso per training
+      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
+      - RICHTER_MODE=training
+      - RICHTER_TRAINING_TYPE=nested_cv
+      - RICHTER_TARGET_F1=0.78
+    working_dir: /app
+    command: python src/models/train_nested_cv_ensemble.py
+    profiles:
+      - training
+      - training-nested
+    networks:
+      - richter-network
+    deploy:
+      resources:
+        limits:
+          memory: 12G
+        reservations:
+          memory: 6G
+
+  #  Servizio per training semplice (debug/development)
+  richter-training-simple:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: richter-training-simple
+    image: richter-predictor:latest
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models:rw
+      - ./reports:/app/reports:rw
+      - ./src:/app/src:ro
+      - ./logs:/app/logs:rw
+    environment:
+      - PYTHONPATH=/app/src
+      - TF_CPP_MIN_LOG_LEVEL=1
+      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
+      - RICHTER_MODE=development
+      - RICHTER_TRAINING_TYPE=simple
+    working_dir: /app
+    command: python src/models/train_simple_holdout.py
+    profiles:
+      - training
+      - training-simple
+      - development
+    networks:
+      - richter-network
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+
+  #  Servizio per EDA e analisi dati
+  richter-eda:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: richter-eda
+    image: richter-predictor:latest
+    volumes:
+      - ./data:/app/data:ro
+      - ./src:/app/src:ro
+      - ./reports:/app/reports:rw
+    environment:
+      - PYTHONPATH=/app/src
+      - RICHTER_MODE=analysis
+      - MATPLOTLIB_BACKEND=Agg  # Non-interactive backend
+    working_dir: /app
+    command: python src/data/eda.py
+    profiles:
+      - eda
+      - analysis
+    networks:
+      - richter-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+#  Networks
+networks:
+  richter-network:
+    driver: bridge
+    name: richter-network
+
+#  Volumes per cache e persistenza
+volumes:
+  richter_cache:
+    name: richter_cache
+    driver: local
+  richter_tensorflow_cache:
+    name: richter_tensorflow_cache
+    driver: local
+
+  #  Servizio per submission automatica con modello migliore
+  richter-submission:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: richter-submission-fia
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models:ro
+      - ./src:/app/src:ro
+      - ./submissions:/app/submissions:rw
+    environment:
+      - PYTHONPATH=/app/src
+      - TF_CPP_MIN_LOG_LEVEL=2
+      - RICHTER_MODE=submission
+    working_dir: /app
+    command: python src/create_submission.py --model_type=single
     profiles:
       - submission
 

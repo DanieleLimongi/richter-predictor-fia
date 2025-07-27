@@ -31,6 +31,17 @@ except ImportError as e:
         print("Integration tests are not available in this environment")
         return True
 
+try:
+    from test_modular_feature_engineering import run_modular_feature_engineering_tests
+    MODULAR_FE_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Modular feature engineering tests not available: {e}")
+    MODULAR_FE_AVAILABLE = False
+    
+    def run_modular_feature_engineering_tests():
+        print("Modular feature engineering tests are not available in this environment")
+        return True
+
 
 def run_all_tests():
     """Esegue tutte le test suite ottimizzate in sequenza"""
@@ -43,7 +54,7 @@ def run_all_tests():
     total_start_time = time.time()
     
     # Test suite consolidata core (sostituisce core, utils, preprocessing)
-    print("1️⃣  CORE CONSOLIDATED TESTS")
+    print("1  CORE CONSOLIDATED TESTS")
     print("-" * 50)
     try:
         results['core'] = run_core_consolidated_tests()
@@ -55,7 +66,7 @@ def run_all_tests():
     print("\n" + "=" * 80)
     
     # Test modelli (specifico TensorFlow/Keras)
-    print("2️⃣  MODEL TESTS")
+    print("2  MODEL TESTS")
     print("-" * 50)
     try:
         model_result = run_model_tests()
@@ -68,7 +79,7 @@ def run_all_tests():
     print("\n" + "=" * 80)
     
     # Test ensemble (specifico architetture ensemble)
-    print("3️⃣  ENSEMBLE TESTS")
+    print("3  ENSEMBLE TESTS")
     print("-" * 50)
     try:
         results['ensemble'] = run_ensemble_tests()
@@ -79,8 +90,24 @@ def run_all_tests():
     
     print("\n" + "=" * 80)
     
+    # Test modular feature engineering (nuovo)
+    print("4  MODULAR FEATURE ENGINEERING TESTS")
+    print("-" * 50)
+    try:
+        if MODULAR_FE_AVAILABLE:
+            results['modular_fe'] = run_modular_feature_engineering_tests()
+        else:
+            print("Modular FE tests skipped (modules not available)")
+            results['modular_fe'] = True
+        print("Modular feature engineering tests completed")
+    except Exception as e:
+        print(f"Modular feature engineering tests failed: {e}")
+        results['modular_fe'] = False
+    
+    print("\n" + "=" * 80)
+    
     # Test integrazione (end-to-end)
-    print("4️⃣  INTEGRATION TESTS")
+    print("5  INTEGRATION TESTS")
     print("-" * 50)
     try:
         if INTEGRATION_AVAILABLE:
@@ -134,6 +161,7 @@ def run_specific_suite(suite_name):
         'core': run_core_consolidated_tests,
         'models': lambda: run_model_tests().wasSuccessful(),
         'ensemble': run_ensemble_tests,
+        'modular_fe': run_modular_feature_engineering_tests,
         'integration': run_integration_tests
     }
     
@@ -207,7 +235,7 @@ if __name__ == "__main__":
         elif command == 'summary':
             show_optimization_summary()
             exit_code = 0
-        elif command in ['core', 'models', 'ensemble', 'integration']:
+        elif command in ['core', 'models', 'ensemble', 'modular_fe', 'integration']:
             exit_code = run_specific_suite(command)
         elif command in ['help', '-h', '--help']:
             print("RICHTER PREDICTOR - CONSOLIDATED TEST RUNNER")
@@ -217,6 +245,7 @@ if __name__ == "__main__":
             print("   python run_tests.py core         # Run core consolidated tests")
             print("   python run_tests.py models       # Run model tests only")
             print("   python run_tests.py ensemble     # Run ensemble tests only")
+            print("   python run_tests.py modular_fe   # Run modular feature engineering tests")
             print("   python run_tests.py integration  # Run integration tests only")
             print("   python run_tests.py summary      # Show optimization summary")
             print("   python run_tests.py help         # Show this help")
@@ -225,6 +254,7 @@ if __name__ == "__main__":
             print("   • core:        Feature engineering + utils + preprocessing")
             print("   • models:      TensorFlow/Keras model architectures")
             print("   • ensemble:    Ensemble architectures and combinations")
+            print("   • modular_fe:  Comprehensive modular feature engineering tests")
             print("   • integration: End-to-end workflow validation")
             exit_code = 0
         else:

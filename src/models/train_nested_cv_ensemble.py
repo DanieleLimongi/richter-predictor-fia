@@ -15,10 +15,8 @@ import pandas as pd
 import tensorflow as tf
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, classification_report
-import joblib
 from datetime import datetime
 from tqdm import tqdm
-import time
 import json
 from typing import Dict, List, Tuple, Any
 import random
@@ -30,8 +28,7 @@ tf.get_logger().setLevel('ERROR')
 
 # Import componenti
 from data.data_analysis import DataAnalyzer
-from feature_engineering.advanced_features import AdvancedFeatureEngineer
-from preprocessing.main_pipeline import RichterPreprocessingPipeline
+from feature_engineering import AdvancedFeatureEngineer
 from models.ensemble_architectures import EnsembleArchitectures
 
 class LeakageDetector:
@@ -80,22 +77,27 @@ class LeakageDetector:
         }
 
 class NestedCVRichterTrainer:
+    """
+    Trainer per ensemble Richter con Nested CV e anti-leakage protection
+    
+    Obiettivo: F1-score >= 0.78 con validazione robusta
+    Architettura: 4 outer folds × 6 architetture × 4 random search = 120 modelli totali
+    """
+    
     def __init__(self):
         self.target_f1 = 0.78
         self.best_models = []
         self.final_f1 = 0.0
         self.leakage_detector = LeakageDetector()
         
-        # Random search leggero - 4 combinazioni per architettura
+        # Hyperparameter search space
         self.random_search_space = {
             'learning_rate': [0.0005, 0.001, 0.003, 0.005],
             'dropout_rate': [0.2, 0.3, 0.4, 0.5], 
             'batch_size': [1024, 2048, 4096],
             'l2_reg': [1e-5, 1e-4, 1e-3]
         }
-        
-        # Numero di combinazioni random da testare per architettura
-        self.n_random_search = 4
+        self.n_random_search = 4  # Combinazioni per architettura
     
     def load_and_prepare_data(self) -> Tuple[pd.DataFrame, np.ndarray]:
         """Carica dati RAW senza preprocessing per evitare leakage"""
@@ -111,129 +113,39 @@ class NestedCVRichterTrainer:
         print(f"   Raw data: {X_df.shape}, target: {np.bincount(y)}")
         return X_df, y
     
-    def safe_preprocessing_pipeline(self, X_df: pd.DataFrame, train_idx: np.ndarray, 
-                                   val_idx: np.ndarray, fold_info: str) -> Tuple[np.ndarray, np.ndarray]:
-        """Preprocessing sicuro con feature engineering integrato - fit solo su train"""
+    def apply_feature_engineering(self, X_df: pd.DataFrame, train_idx: np.ndarray, 
+                                 val_idx: np.ndarray, fold_info: str) -> Tuple[np.ndarray, np.ndarray]:
+        """Applica feature engineering modulare con anti-leakage"""
         
         # Verifica anti-leakage
-        self.leakage_detector.validate_split(train_idx, val_idx, f"preprocessing_{fold_info}")
+        self.leakage_detector.validate_split(train_idx, val_idx, f"feature_eng_{fold_info}")
         
         # Split sicuro
         X_train_df = X_df.iloc[train_idx].copy()
         X_val_df = X_df.iloc[val_idx].copy()
         
-        try:
-            print(f"   Applying advanced feature engineering + preprocessing...")
-            
-            # STEP 1: Feature engineering avanzato - FIT solo su train
-            engineer = AdvancedFeatureEngineer()
-            self.leakage_detector.log_preprocessing_fit("AdvancedFeatureEngineer", train_idx, fold_info)
-            
-            X_train_enhanced = engineer.fit_transform(X_train_df)
-            X_val_enhanced = engineer.transform(X_val_df)  # Solo transform su validation
-            
-            print(f"      Feature engineering: {len(X_train_enhanced.columns)} features")
-            
-            # STEP 2: Preprocessing pipeline ottimizzato per feature engineered data
-            pipeline = RichterPreprocessingPipeline()
-            pipeline.setup_preprocessors(
-                force_embedding_categorical=True,
-                add_binary_count=True,
-                group_binary_correlated=True,
-                outlier_detection=True
-            )
-            
-            # Converti a tensori per train (gestione robusta dei tipi)
-            train_dict = {}
-            for col in X_train_enhanced.columns:
-                if pd.api.types.is_string_dtype(X_train_enhanced[col]) or X_train_enhanced[col].dtype == 'object':
-                    # Categorical/string data
-                    train_dict[col] = tf.constant(X_train_enhanced[col].astype(str).values)
-                else:
-                    # Numeric data
-                    numeric_values = pd.to_numeric(X_train_enhanced[col], errors='coerce').fillna(0.0)
-                    train_dict[col] = tf.constant(numeric_values.astype(np.float32).values)
-            
-            # FIT solo su train
-            self.leakage_detector.log_preprocessing_fit("RichterPreprocessingPipeline", train_idx, fold_info)
-            pipeline.fit(train_dict)
-            
-            # Transform train
-            train_processed = pipeline.transform(train_dict)
-            
-            # Converti a tensori per validation (stessa logica)
-            val_dict = {}
-            for col in X_val_enhanced.columns:
-                if pd.api.types.is_string_dtype(X_val_enhanced[col]) or X_val_enhanced[col].dtype == 'object':
-                    val_dict[col] = tf.constant(X_val_enhanced[col].astype(str).values)
-                else:
-                    numeric_values = pd.to_numeric(X_val_enhanced[col], errors='coerce').fillna(0.0)
-                    val_dict[col] = tf.constant(numeric_values.astype(np.float32).values)
-            
-            # Transform validation (usando pipeline fitted su train)
-            val_processed = pipeline.transform(val_dict)
-            
-            # Aggrega features per train con handling robusto
-            train_arrays = []
-            for tensor in train_processed.values():
-                np_array = tensor.numpy()
-                if len(np_array.shape) > 1:
-                    np_array = np_array.reshape(np_array.shape[0], -1)
-                else:
-                    np_array = np_array.reshape(-1, 1)
-                train_arrays.append(np_array)
-            
-            X_train = np.concatenate(train_arrays, axis=1).astype(np.float32)
-            X_train = np.nan_to_num(X_train, nan=0.0, posinf=0.0, neginf=0.0)
-            
-            # Aggrega features per validation
-            val_arrays = []
-            for tensor in val_processed.values():
-                np_array = tensor.numpy()
-                if len(np_array.shape) > 1:
-                    np_array = np_array.reshape(np_array.shape[0], -1)
-                else:
-                    np_array = np_array.reshape(-1, 1)
-                val_arrays.append(np_array)
-            
-            X_val = np.concatenate(val_arrays, axis=1).astype(np.float32)
-            X_val = np.nan_to_num(X_val, nan=0.0, posinf=0.0, neginf=0.0)
-            
-            print(f"      Final processed shapes: Train {X_train.shape}, Val {X_val.shape}")
-            
-            return X_train, X_val
-            
-        except Exception as e:
-            print(f"   WARNING: Advanced preprocessing failed for {fold_info}: {e}")
-            print(f"   Using fallback preprocessing...")
-            
-            # FALLBACK: Solo feature engineering + standard scaling
-            engineer = AdvancedFeatureEngineer()
-            self.leakage_detector.log_preprocessing_fit("AdvancedFeatureEngineer_fallback", train_idx, fold_info)
-            
-            X_train_enhanced = engineer.fit_transform(X_train_df)
-            X_val_enhanced = engineer.transform(X_val_df)
-            
-            # Pulizia robusta
-            for col in X_train_enhanced.columns:
-                if not pd.api.types.is_numeric_dtype(X_train_enhanced[col]):
-                    X_train_enhanced[col] = pd.to_numeric(X_train_enhanced[col], errors='coerce')
-                    X_val_enhanced[col] = pd.to_numeric(X_val_enhanced[col], errors='coerce')
-            
-            X_train_enhanced = X_train_enhanced.fillna(0.0).replace([np.inf, -np.inf], 0.0)
-            X_val_enhanced = X_val_enhanced.fillna(0.0).replace([np.inf, -np.inf], 0.0)
-            
-            # Standard scaler: FIT solo su train
-            from sklearn.preprocessing import StandardScaler
-            scaler = StandardScaler()
-            self.leakage_detector.log_preprocessing_fit("StandardScaler_fallback", train_idx, fold_info)
-            
-            X_train = scaler.fit_transform(X_train_enhanced).astype(np.float32)
-            X_val = scaler.transform(X_val_enhanced).astype(np.float32)  # Solo transform
-            
-            print(f"      Fallback shapes: Train {X_train.shape}, Val {X_val.shape}")
-            
-            return X_train, X_val
+        print(f"   Applying modular feature engineering...")
+        
+        # Feature engineering - FIT solo su train
+        engineer = AdvancedFeatureEngineer()
+        self.leakage_detector.log_preprocessing_fit("AdvancedFeatureEngineer", train_idx, fold_info)
+        
+        X_train_enhanced = engineer.fit_transform(X_train_df)
+        X_val_enhanced = engineer.transform(X_val_df)
+        
+        print(f"      Features created: {len(X_train_enhanced.columns)}")
+        
+        # Conversione finale a numpy
+        X_train = X_train_enhanced.values.astype(np.float32)
+        X_val = X_val_enhanced.values.astype(np.float32)
+        
+        # Safety clean (normalmente non necessario con nuova architettura)
+        X_train = np.nan_to_num(X_train, nan=0.0, posinf=0.0, neginf=0.0)
+        X_val = np.nan_to_num(X_val, nan=0.0, posinf=0.0, neginf=0.0)
+        
+        print(f"      Final shapes: Train {X_train.shape}, Val {X_val.shape}")
+        
+        return X_train, X_val
     
     def generate_random_params(self, architecture: str, outer_fold: int) -> List[Dict]:
         """Genera combinazioni random di parametri per una architettura"""
@@ -266,14 +178,36 @@ class NestedCVRichterTrainer:
         
         return unique_combinations[:self.n_random_search]
     
+    def _create_and_compile_model(self, architecture: str, input_dim: int, learning_rate: float):
+        """Helper per creare e compilare modello (elimina duplicazione)"""
+        ensemble = EnsembleArchitectures(input_dim, 3)
+        model = ensemble.create_architecture(architecture)
+        
+        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+        model.compile(
+            optimizer=optimizer, 
+            loss='sparse_categorical_crossentropy', 
+            metrics=['accuracy']
+        )
+        return model
+    
+    def _create_validation_split(self, X: np.ndarray, y: np.ndarray, val_split: float = 0.15):
+        """Helper per creare validation split (elimina duplicazione)"""
+        n_val = int(len(X) * val_split)
+        indices = np.random.permutation(len(X))
+        val_indices = indices[:n_val]
+        train_indices = indices[n_val:]
+        
+        return (
+            X[train_indices], X[val_indices],
+            y[train_indices], y[val_indices]
+        )
+    
     def inner_cv_random_search(self, X_train: np.ndarray, y_train: np.ndarray, 
                               architecture: str, outer_fold: int) -> Dict:
         """Inner CV con random search leggero per hyperparameter tuning"""
         
         print(f"    Random search for {architecture} (outer fold {outer_fold+1})...")
-        
-        # NESSUN inner CV - solo test diretto delle combinazioni random
-        # Per mantenere il totale a ~96 modelli
         
         # Genera combinazioni random
         param_combinations = self.generate_random_params(architecture, outer_fold)
@@ -285,30 +219,20 @@ class NestedCVRichterTrainer:
         # Progress bar per random search
         search_progress = tqdm(total=len(param_combinations), desc=f"      {architecture} search", leave=False)
         
-        # Split una volta per validation rapida
-        val_split = 0.2
-        n_val = int(len(X_train) * val_split)
-        indices = np.random.permutation(len(X_train))
-        val_indices = indices[:n_val]
-        train_indices = indices[n_val:]
-        
-        X_quick_train = X_train[train_indices]
-        X_quick_val = X_train[val_indices]
-        y_quick_train = y_train[train_indices]
-        y_quick_val = y_train[val_indices]
+        # Split per validation rapida
+        X_quick_train, X_quick_val, y_quick_train, y_quick_val = self._create_validation_split(
+            X_train, y_train, val_split=0.2
+        )
         
         for param_idx, params in enumerate(param_combinations):
             search_progress.set_description(f"      {architecture} search {param_idx+1}/{len(param_combinations)}")
             search_progress.set_postfix(params)
             
             try:
-                # Create model con parametri
-                ensemble = EnsembleArchitectures(X_quick_train.shape[1], 3)
-                model = ensemble.create_architecture(architecture)
-                
-                # Compile con parametri
-                optimizer = tf.keras.optimizers.Adam(learning_rate=params['learning_rate'])
-                model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+                # Create and compile model
+                model = self._create_and_compile_model(
+                    architecture, X_quick_train.shape[1], params['learning_rate']
+                )
                 
                 # Train veloce per selezione parametri
                 early_stopping = tf.keras.callbacks.EarlyStopping(
@@ -367,8 +291,7 @@ class NestedCVRichterTrainer:
         all_results = []
         outer_fold_models = []
         
-        # Progress tracking AGGIORNATO per random search
-        # 4 outer × 6 arch × (4 random + 1 final) = 4×6×5 = 120 modelli totali  
+        # Progress tracking calculation
         final_models = 4 * len(architectures)  # 24 modelli finali per ensemble
         search_models = final_models * self.n_random_search  # 96 modelli per random search
         total_models = final_models + search_models  # 120 totali
@@ -386,8 +309,8 @@ class NestedCVRichterTrainer:
             print(f"\nOUTER FOLD {outer_fold+1}/4")
             print(f"   Train: {len(train_idx)}, Test: {len(test_idx)}")
             
-            # Preprocessing sicuro per questo outer fold
-            X_train, X_test = self.safe_preprocessing_pipeline(
+            # Feature engineering sicuro per questo outer fold
+            X_train, X_test = self.apply_feature_engineering(
                 X_df, train_idx, test_idx, f"outer_fold_{outer_fold+1}"
             )
             y_train, y_test = y[train_idx], y[test_idx]
@@ -408,17 +331,9 @@ class NestedCVRichterTrainer:
                 print(f"    Training {architecture} with best params: {best_config['best_params']}")
                 
                 try:
-                    ensemble = EnsembleArchitectures(X_train.shape[1], 3)
-                    final_model = ensemble.create_architecture(architecture)
-                    
-                    # Compile con migliori parametri trovati
-                    optimizer = tf.keras.optimizers.Adam(
-                        learning_rate=best_config['best_params']['learning_rate']
-                    )
-                    final_model.compile(
-                        optimizer=optimizer, 
-                        loss='sparse_categorical_crossentropy', 
-                        metrics=['accuracy']
+                    # Create final model con migliori parametri
+                    final_model = self._create_and_compile_model(
+                        architecture, X_train.shape[1], best_config['best_params']['learning_rate']
                     )
                     
                     # Train esteso con early stopping meno aggressivo e progress bar
@@ -435,19 +350,10 @@ class NestedCVRichterTrainer:
                         })
                     )
                     
-                    # Split train per validation durante final training
-                    val_split = 0.15  # Ridotto validation split
-                    n_val = int(len(X_train) * val_split)
-                    
-                    # Shuffle indices per validation split
-                    indices = np.random.permutation(len(X_train))
-                    val_indices = indices[:n_val]
-                    train_indices = indices[n_val:]
-                    
-                    X_final_train = X_train[train_indices]
-                    X_final_val = X_train[val_indices]
-                    y_final_train = y_train[train_indices]
-                    y_final_val = y_train[val_indices]
+                    # Split per validation durante final training
+                    X_final_train, X_final_val, y_final_train, y_final_val = self._create_validation_split(
+                        X_train, y_train, val_split=0.15
+                    )
                     
                     final_model.fit(
                         X_final_train, y_final_train,

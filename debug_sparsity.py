@@ -15,7 +15,7 @@ sys.path.append('src/data')
 sys.path.append('src/preprocessing')
 
 from data.data_analysis import DataAnalyzer
-from preprocessing.main_pipeline import RichterPreprocessingPipeline
+from feature_engineering import AdvancedFeatureEngineer
 
 def analyze_sparsity(data, name):
     """Calcola e stampa statistiche di sparsity"""
@@ -64,7 +64,7 @@ def main():
     print("="*50)
     
     # 1. Carica dati raw
-    print("\n1️⃣ Loading raw data...")
+    print("\n1 Loading raw data...")
     analyzer = DataAnalyzer()
     df = analyzer.load_data()
     
@@ -74,63 +74,64 @@ def main():
     
     analyze_sparsity(X_df_raw, "RAW DATA")
     
-    # 2. Converti in tensori come fa train_advanced_ensemble
-    print("\n2️⃣ Converting to tensors...")
-    data_dict = {}
-    for col in X_df_raw.columns:
-        if X_df_raw[col].dtype == 'object':
-            # Categorical features
-            data_dict[col] = tf.constant(X_df_raw[col].astype(str).values)
-        else:
-            # Numeric features
-            data_dict[col] = tf.constant(X_df_raw[col].astype(np.float32).values)
+    # 2. Analisi dati raw
+    print("\n2 Raw data analysis...")
     
-    analyze_sparsity(data_dict, "TENSOR DATA (pre-preprocessing)")
+    # Check data types
+    numeric_cols = X_df_raw.select_dtypes(include=[np.number]).columns
+    categorical_cols = X_df_raw.select_dtypes(include=[object]).columns
     
-    # 3. Applica preprocessing
-    print("\n3️⃣ Applying preprocessing pipeline...")
-    pipeline = RichterPreprocessingPipeline()
-    pipeline.setup_preprocessors(
-        force_embedding_categorical=False,
-        add_binary_count=True,
-        group_binary_correlated=True,
-        outlier_detection=True
-    )
+    print(f"   Numeric columns: {len(numeric_cols)}")
+    print(f"   Categorical columns: {len(categorical_cols)}")
     
-    pipeline.fit(data_dict)
-    processed = pipeline.transform(data_dict)
+    analyze_sparsity(X_df_raw, "RAW FEATURES ONLY")
     
-    analyze_sparsity(processed, "PROCESSED DATA (post-preprocessing)")
+    # 3. Applica feature engineering
+    print("\n3 Applying new modular feature engineering...")
     
-    # 4. Aggrega come fa train_advanced_ensemble
-    print("\n4️⃣ Aggregating features...")
-    arrays = []
-    for tensor in processed.values():
-        np_array = tensor.numpy()
-        if len(np_array.shape) > 1:
-            np_array = np_array.reshape(np_array.shape[0], -1)
-        else:
-            np_array = np_array.reshape(-1, 1)
-        arrays.append(np_array)
+    # Merge back with target for feature engineering
+    y = df['damage_grade']
+    df_with_target = X_df_raw.copy()
+    df_with_target['damage_grade'] = y
     
-    X_final = np.concatenate(arrays, axis=1).astype(np.float32)
-    X_final = np.nan_to_num(X_final)
+    # Use new feature engineering architecture
+    engineer = AdvancedFeatureEngineer()
+    df_enhanced = engineer.fit_transform(df_with_target, 'damage_grade')
     
-    analyze_sparsity(X_final, "FINAL AGGREGATED DATA")
+    # Remove target and building_id
+    X_enhanced = df_enhanced.drop(['damage_grade', 'building_id'], axis=1, errors='ignore')
     
-    # 5. Analisi per tipo di feature
-    print("\n5️⃣ Breakdown by feature type:")
-    for i, (key, tensor) in enumerate(processed.items()):
-        np_array = tensor.numpy()
-        if len(np_array.shape) > 1:
-            np_array = np_array.reshape(np_array.shape[0], -1)
-        else:
-            np_array = np_array.reshape(-1, 1)
-        
-        total_elements = np_array.size
-        zero_elements = np.sum(np_array == 0)
-        sparsity = (zero_elements / total_elements) * 100
-        print(f"   {key}: {np_array.shape} -> {sparsity:.1f}% sparse")
+    analyze_sparsity(X_enhanced, "ENHANCED DATA (post-feature-engineering)")
+    
+    # 4. Final preprocessing
+    print("\n4 Final data preparation...")
+    
+    # Ensure all numeric
+    for col in X_enhanced.columns:
+        if not pd.api.types.is_numeric_dtype(X_enhanced[col]):
+            X_enhanced[col] = pd.to_numeric(X_enhanced[col], errors='coerce')
+    
+    # Clean data
+    X_enhanced = X_enhanced.fillna(0.0).replace([np.inf, -np.inf], 0.0)
+    
+    # Convert to numpy
+    X_final = X_enhanced.values.astype(np.float32)
+    
+    analyze_sparsity(X_final, "FINAL NUMPY DATA")
+    
+    # 5. Feature breakdown
+    print("\n5 Feature breakdown:")
+    print(f"   Original features: {len(X_df_raw.columns)}")
+    print(f"   Enhanced features: {len(X_enhanced.columns)}")
+    print(f"   Features added: +{len(X_enhanced.columns) - len(X_df_raw.columns)}")
+    
+    # Sample some feature statistics
+    if len(X_enhanced.columns) > 10:
+        sample_features = X_enhanced.columns[:10]
+        for feature in sample_features:
+            values = X_enhanced[feature].values
+            sparsity = (np.sum(values == 0) / len(values)) * 100
+            print(f"   {feature}: {sparsity:.1f}% sparse")
 
 if __name__ == "__main__":
     main()
