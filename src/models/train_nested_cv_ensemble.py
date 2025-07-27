@@ -7,10 +7,13 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Solo errori, no warning CUDA/XLA
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.model_selection import StratifiedKFold, ParameterGrid
+from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score, classification_report
 import joblib
 from datetime import datetime
@@ -18,8 +21,12 @@ from tqdm import tqdm
 import time
 import json
 from typing import Dict, List, Tuple, Any
+import random
 import warnings
 warnings.filterwarnings('ignore')
+
+# Silenzia anche i log TensorFlow verbose
+tf.get_logger().setLevel('ERROR')
 
 # Import componenti
 from data.data_analysis import DataAnalyzer
@@ -79,45 +86,16 @@ class NestedCVRichterTrainer:
         self.final_f1 = 0.0
         self.leakage_detector = LeakageDetector()
         
-        # Hyperparameter grids per architettura
-        self.hyperparameter_grids = {
-            'deep_narrow': {
-                'batch_size': [1024, 2048],
-                'learning_rate': [0.001, 0.003, 0.01],
-                'dropout_rate': [0.3, 0.5],
-                'l2_reg': [1e-4, 1e-3]
-            },
-            'wide_shallow': {
-                'batch_size': [1024, 2048, 4096],
-                'learning_rate': [0.001, 0.003],
-                'dropout_rate': [0.2, 0.4],
-                'l2_reg': [1e-5, 1e-4]
-            },
-            'residual_like': {
-                'batch_size': [1024, 2048],
-                'learning_rate': [0.001, 0.005],
-                'dropout_rate': [0.3, 0.4],
-                'l2_reg': [1e-4, 1e-3]
-            },
-            'regularized': {
-                'batch_size': [1024, 2048],
-                'learning_rate': [0.001, 0.003],
-                'dropout_rate': [0.4, 0.6],
-                'l2_reg': [1e-3, 1e-2]
-            },
-            'swish_activation': {
-                'batch_size': [1024, 2048],
-                'learning_rate': [0.001, 0.005],
-                'dropout_rate': [0.2, 0.4],
-                'l2_reg': [1e-4, 1e-3]
-            },
-            'attention_like': {
-                'batch_size': [1024, 2048],
-                'learning_rate': [0.0005, 0.001, 0.003],
-                'dropout_rate': [0.3, 0.5],
-                'l2_reg': [1e-4, 1e-3]
-            }
+        # Random search leggero - 4 combinazioni per architettura
+        self.random_search_space = {
+            'learning_rate': [0.0005, 0.001, 0.003, 0.005],
+            'dropout_rate': [0.2, 0.3, 0.4, 0.5], 
+            'batch_size': [1024, 2048, 4096],
+            'l2_reg': [1e-5, 1e-4, 1e-3]
         }
+        
+        # Numero di combinazioni random da testare per architettura
+        self.n_random_search = 4
     
     def load_and_prepare_data(self) -> Tuple[pd.DataFrame, np.ndarray]:
         """Carica dati RAW senza preprocessing per evitare leakage"""
@@ -135,7 +113,7 @@ class NestedCVRichterTrainer:
     
     def safe_preprocessing_pipeline(self, X_df: pd.DataFrame, train_idx: np.ndarray, 
                                    val_idx: np.ndarray, fold_info: str) -> Tuple[np.ndarray, np.ndarray]:
-        """Preprocessing sicuro senza leakage: fit solo su train, transform su train+val"""
+        """Preprocessing sicuro con feature engineering integrato - fit solo su train"""
         
         # Verifica anti-leakage
         self.leakage_detector.validate_split(train_idx, val_idx, f"preprocessing_{fold_info}")
@@ -145,14 +123,18 @@ class NestedCVRichterTrainer:
         X_val_df = X_df.iloc[val_idx].copy()
         
         try:
-            # Feature engineering: FIT solo su train
+            print(f"   Applying advanced feature engineering + preprocessing...")
+            
+            # STEP 1: Feature engineering avanzato - FIT solo su train
             engineer = AdvancedFeatureEngineer()
             self.leakage_detector.log_preprocessing_fit("AdvancedFeatureEngineer", train_idx, fold_info)
             
             X_train_enhanced = engineer.fit_transform(X_train_df)
             X_val_enhanced = engineer.transform(X_val_df)  # Solo transform su validation
             
-            # Preprocessing pipeline: FIT solo su train
+            print(f"      Feature engineering: {len(X_train_enhanced.columns)} features")
+            
+            # STEP 2: Preprocessing pipeline ottimizzato per feature engineered data
             pipeline = RichterPreprocessingPipeline()
             pipeline.setup_preprocessors(
                 force_embedding_categorical=True,
@@ -161,13 +143,16 @@ class NestedCVRichterTrainer:
                 outlier_detection=True
             )
             
-            # Converti a tensori per train
+            # Converti a tensori per train (gestione robusta dei tipi)
             train_dict = {}
             for col in X_train_enhanced.columns:
-                if X_train_enhanced[col].dtype == 'object':
+                if pd.api.types.is_string_dtype(X_train_enhanced[col]) or X_train_enhanced[col].dtype == 'object':
+                    # Categorical/string data
                     train_dict[col] = tf.constant(X_train_enhanced[col].astype(str).values)
                 else:
-                    train_dict[col] = tf.constant(X_train_enhanced[col].astype(np.float32).values)
+                    # Numeric data
+                    numeric_values = pd.to_numeric(X_train_enhanced[col], errors='coerce').fillna(0.0)
+                    train_dict[col] = tf.constant(numeric_values.astype(np.float32).values)
             
             # FIT solo su train
             self.leakage_detector.log_preprocessing_fit("RichterPreprocessingPipeline", train_idx, fold_info)
@@ -176,18 +161,19 @@ class NestedCVRichterTrainer:
             # Transform train
             train_processed = pipeline.transform(train_dict)
             
-            # Converti a tensori per validation
+            # Converti a tensori per validation (stessa logica)
             val_dict = {}
             for col in X_val_enhanced.columns:
-                if X_val_enhanced[col].dtype == 'object':
+                if pd.api.types.is_string_dtype(X_val_enhanced[col]) or X_val_enhanced[col].dtype == 'object':
                     val_dict[col] = tf.constant(X_val_enhanced[col].astype(str).values)
                 else:
-                    val_dict[col] = tf.constant(X_val_enhanced[col].astype(np.float32).values)
+                    numeric_values = pd.to_numeric(X_val_enhanced[col], errors='coerce').fillna(0.0)
+                    val_dict[col] = tf.constant(numeric_values.astype(np.float32).values)
             
             # Transform validation (usando pipeline fitted su train)
             val_processed = pipeline.transform(val_dict)
             
-            # Aggrega features per train
+            # Aggrega features per train con handling robusto
             train_arrays = []
             for tensor in train_processed.values():
                 np_array = tensor.numpy()
@@ -198,7 +184,7 @@ class NestedCVRichterTrainer:
                 train_arrays.append(np_array)
             
             X_train = np.concatenate(train_arrays, axis=1).astype(np.float32)
-            X_train = np.nan_to_num(X_train)
+            X_train = np.nan_to_num(X_train, nan=0.0, posinf=0.0, neginf=0.0)
             
             # Aggrega features per validation
             val_arrays = []
@@ -211,7 +197,9 @@ class NestedCVRichterTrainer:
                 val_arrays.append(np_array)
             
             X_val = np.concatenate(val_arrays, axis=1).astype(np.float32)
-            X_val = np.nan_to_num(X_val)
+            X_val = np.nan_to_num(X_val, nan=0.0, posinf=0.0, neginf=0.0)
+            
+            print(f"      Final processed shapes: Train {X_train.shape}, Val {X_val.shape}")
             
             return X_train, X_val
             
@@ -219,14 +207,14 @@ class NestedCVRichterTrainer:
             print(f"   WARNING: Advanced preprocessing failed for {fold_info}: {e}")
             print(f"   Using fallback preprocessing...")
             
-            # Fallback sicuro
+            # FALLBACK: Solo feature engineering + standard scaling
             engineer = AdvancedFeatureEngineer()
             self.leakage_detector.log_preprocessing_fit("AdvancedFeatureEngineer_fallback", train_idx, fold_info)
             
             X_train_enhanced = engineer.fit_transform(X_train_df)
             X_val_enhanced = engineer.transform(X_val_df)
             
-            # Converti a numerico
+            # Pulizia robusta
             for col in X_train_enhanced.columns:
                 if not pd.api.types.is_numeric_dtype(X_train_enhanced[col]):
                     X_train_enhanced[col] = pd.to_numeric(X_train_enhanced[col], errors='coerce')
@@ -235,7 +223,7 @@ class NestedCVRichterTrainer:
             X_train_enhanced = X_train_enhanced.fillna(0.0).replace([np.inf, -np.inf], 0.0)
             X_val_enhanced = X_val_enhanced.fillna(0.0).replace([np.inf, -np.inf], 0.0)
             
-            # Scaler: FIT solo su train
+            # Standard scaler: FIT solo su train
             from sklearn.preprocessing import StandardScaler
             scaler = StandardScaler()
             self.leakage_detector.log_preprocessing_fit("StandardScaler_fallback", train_idx, fold_info)
@@ -243,91 +231,120 @@ class NestedCVRichterTrainer:
             X_train = scaler.fit_transform(X_train_enhanced).astype(np.float32)
             X_val = scaler.transform(X_val_enhanced).astype(np.float32)  # Solo transform
             
+            print(f"      Fallback shapes: Train {X_train.shape}, Val {X_val.shape}")
+            
             return X_train, X_val
     
-    def inner_cv_hyperparameter_search(self, X_train: np.ndarray, y_train: np.ndarray, 
-                                     architecture: str, outer_fold: int) -> Dict:
-        """Inner CV per hyperparameter tuning di una specifica architettura"""
+    def generate_random_params(self, architecture: str, outer_fold: int) -> List[Dict]:
+        """Genera combinazioni random di parametri per una architettura"""
         
-        print(f"    Inner CV for {architecture} (outer fold {outer_fold+1})...")
+        # Set seed per riproducibilità per architettura+fold (assicura valore positivo)
+        seed_value = abs(hash(architecture + str(outer_fold))) % (2**32 - 1)
+        random.seed(seed_value)
+        np.random.seed(seed_value)
         
-        # Inner CV con 4 fold
-        inner_cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=42+outer_fold)
+        combinations = []
+        for i in range(self.n_random_search):
+            params = {}
+            for param_name, param_values in self.random_search_space.items():
+                params[param_name] = random.choice(param_values)
+            combinations.append(params)
         
-        # Grid search
-        param_grid = list(ParameterGrid(self.hyperparameter_grids[architecture]))
+        # Rimuovi duplicati
+        unique_combinations = []
+        for combo in combinations:
+            if combo not in unique_combinations:
+                unique_combinations.append(combo)
+        
+        # Se abbiamo meno di n_random_search combinazioni uniche, riempi con random aggiuntive
+        while len(unique_combinations) < self.n_random_search:
+            params = {}
+            for param_name, param_values in self.random_search_space.items():
+                params[param_name] = random.choice(param_values)
+            if params not in unique_combinations:
+                unique_combinations.append(params)
+        
+        return unique_combinations[:self.n_random_search]
+    
+    def inner_cv_random_search(self, X_train: np.ndarray, y_train: np.ndarray, 
+                              architecture: str, outer_fold: int) -> Dict:
+        """Inner CV con random search leggero per hyperparameter tuning"""
+        
+        print(f"    Random search for {architecture} (outer fold {outer_fold+1})...")
+        
+        # NESSUN inner CV - solo test diretto delle combinazioni random
+        # Per mantenere il totale a ~96 modelli
+        
+        # Genera combinazioni random
+        param_combinations = self.generate_random_params(architecture, outer_fold)
         best_params = None
         best_score = 0.0
         
-        # Limita search per tempo computazionale
-        max_combinations = min(8, len(param_grid))
-        param_grid = param_grid[:max_combinations]
+        print(f"      Testing {len(param_combinations)} random combinations (simple validation)...")
         
-        for param_idx, params in enumerate(param_grid):
-            print(f"      Testing params {param_idx+1}/{len(param_grid)}: {params}")
+        # Progress bar per random search
+        search_progress = tqdm(total=len(param_combinations), desc=f"      {architecture} search", leave=False)
+        
+        # Split una volta per validation rapida
+        val_split = 0.2
+        n_val = int(len(X_train) * val_split)
+        indices = np.random.permutation(len(X_train))
+        val_indices = indices[:n_val]
+        train_indices = indices[n_val:]
+        
+        X_quick_train = X_train[train_indices]
+        X_quick_val = X_train[val_indices]
+        y_quick_train = y_train[train_indices]
+        y_quick_val = y_train[val_indices]
+        
+        for param_idx, params in enumerate(param_combinations):
+            search_progress.set_description(f"      {architecture} search {param_idx+1}/{len(param_combinations)}")
+            search_progress.set_postfix(params)
             
-            inner_scores = []
-            
-            # Inner CV per questa combinazione parametri
-            for inner_fold, (inner_train_idx, inner_val_idx) in enumerate(inner_cv.split(X_train, y_train)):
+            try:
+                # Create model con parametri
+                ensemble = EnsembleArchitectures(X_quick_train.shape[1], 3)
+                model = ensemble.create_architecture(architecture)
                 
-                # Verifica anti-leakage inner
-                self.leakage_detector.validate_split(
-                    inner_train_idx, inner_val_idx, 
-                    f"inner_f{outer_fold+1}_{architecture}_p{param_idx+1}_if{inner_fold+1}"
+                # Compile con parametri
+                optimizer = tf.keras.optimizers.Adam(learning_rate=params['learning_rate'])
+                model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+                
+                # Train veloce per selezione parametri
+                early_stopping = tf.keras.callbacks.EarlyStopping(
+                    patience=3, restore_best_weights=True, verbose=0
                 )
                 
-                try:
-                    # Split inner
-                    X_inner_train = X_train[inner_train_idx]
-                    X_inner_val = X_train[inner_val_idx]  # Attenzione: validation è subset di X_train!
-                    y_inner_train = y_train[inner_train_idx]
-                    y_inner_val = y_train[inner_val_idx]
-                    
-                    # Create model con parametri
-                    ensemble = EnsembleArchitectures(X_inner_train.shape[1], 3)
-                    model = ensemble.create_architecture(architecture)
-                    
-                    # Compile con parametri
-                    optimizer = tf.keras.optimizers.Adam(learning_rate=params['learning_rate'])
-                    model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-                    
-                    # Train rapido per inner CV
-                    early_stopping = tf.keras.callbacks.EarlyStopping(
-                        patience=5, restore_best_weights=True, verbose=0
-                    )
-                    
-                    model.fit(
-                        X_inner_train, y_inner_train,
-                        validation_data=(X_inner_val, y_inner_val),
-                        epochs=50,  # Meno epoche per speed
-                        batch_size=params['batch_size'],
-                        callbacks=[early_stopping],
-                        verbose=0
-                    )
-                    
-                    # Evaluate
-                    pred = model.predict(X_inner_val, verbose=0)
-                    f1 = f1_score(y_inner_val, np.argmax(pred, axis=1), average='micro')
-                    inner_scores.append(f1)
-                    
-                    # Cleanup
-                    del model
-                    tf.keras.backend.clear_session()
-                    
-                except Exception as e:
-                    print(f"        FAILED: Inner fold {inner_fold+1} failed: {e}")
-                    inner_scores.append(0.33)
+                model.fit(
+                    X_quick_train, y_quick_train,
+                    validation_data=(X_quick_val, y_quick_val),
+                    epochs=30,  # Molto veloce per selezione
+                    batch_size=params['batch_size'],
+                    callbacks=[early_stopping],
+                    verbose=0
+                )
+                
+                # Evaluate
+                pred = model.predict(X_quick_val, verbose=0)
+                f1 = f1_score(y_quick_val, np.argmax(pred, axis=1), average='micro')
+                
+                search_progress.set_postfix({**params, 'f1': f'{f1:.4f}'})
+                
+                if f1 > best_score:
+                    best_score = f1
+                    best_params = params.copy()
+                
+                # Cleanup
+                del model
+                tf.keras.backend.clear_session()
+                
+            except Exception as e:
+                search_progress.set_postfix({**params, 'status': 'FAILED'})
             
-            # Media inner CV per questa combinazione
-            avg_score = np.mean(inner_scores)
-            print(f"        Avg F1: {avg_score:.4f} (std: {np.std(inner_scores):.4f})")
-            
-            if avg_score > best_score:
-                best_score = avg_score
-                best_params = params.copy()
+            search_progress.update(1)
         
-        print(f"    Best params for {architecture}: {best_params} (F1: {best_score:.4f})")
+        search_progress.close()
+        print(f"      Best params for {architecture}: {best_params} (F1: {best_score:.4f})")
         return {
             'architecture': architecture,
             'best_params': best_params,
@@ -339,19 +356,26 @@ class NestedCVRichterTrainer:
         """Training con Nested CV completo"""
         print("Starting NESTED CV training (anti-leakage)...")
         
-        # Outer CV per model selection
-        outer_cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+        # 4 outer folds per ensemble ancora più robusto
+        outer_cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=42)
         
-        # Architetture da testare
+        # Tutte le 6 architetture disponibili per ensemble completo
         ensemble_dummy = EnsembleArchitectures(100, 3)  # Dummy per get architectures
         architectures = ensemble_dummy.get_available_architectures()
+        print(f"   Using all {len(architectures)} architectures: {architectures}")
         
         all_results = []
         outer_fold_models = []
         
-        # Progress tracking
-        total_steps = 5 * len(architectures)  # outer_folds * architectures
-        progress_bar = tqdm(total=total_steps, desc="Nested CV Progress")
+        # Progress tracking AGGIORNATO per random search
+        # 4 outer × 6 arch × (4 random + 1 final) = 4×6×5 = 120 modelli totali  
+        final_models = 4 * len(architectures)  # 24 modelli finali per ensemble
+        search_models = final_models * self.n_random_search  # 96 modelli per random search
+        total_models = final_models + search_models  # 120 totali
+        
+        progress_bar = tqdm(total=final_models, desc="Nested CV Progress")
+        print(f"   Total models to train: {total_models} ({search_models} search + {final_models} final)")
+        print(f"   Final ensemble models: {final_models}")
         
         # Outer CV loop
         for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(X_df, y)):
@@ -359,7 +383,7 @@ class NestedCVRichterTrainer:
             # Verifica anti-leakage outer
             self.leakage_detector.validate_split(train_idx, test_idx, f"outer_fold_{outer_fold+1}")
             
-            print(f"\nOUTER FOLD {outer_fold+1}/5")
+            print(f"\nOUTER FOLD {outer_fold+1}/4")
             print(f"   Train: {len(train_idx)}, Test: {len(test_idx)}")
             
             # Preprocessing sicuro per questo outer fold
@@ -374,21 +398,20 @@ class NestedCVRichterTrainer:
             fold_best_models = []
             
             for arch_idx, architecture in enumerate(architectures):
-                progress_bar.set_description(f"Fold {outer_fold+1}/5 - {architecture}")
+                model_num = outer_fold * len(architectures) + arch_idx + 1
+                progress_bar.set_description(f"Modello {model_num}/24: {architecture} (Fold {outer_fold+1}/4)")
                 
-                # Hyperparameter search per questa architettura
-                best_config = self.inner_cv_hyperparameter_search(
-                    X_train, y_train, architecture, outer_fold
-                )
+                # Random search per trovare migliori parametri
+                best_config = self.inner_cv_random_search(X_train, y_train, architecture, outer_fold)
                 
-                # Train finale con best params su tutto il training set dell'outer fold
-                print(f"    Final training {architecture} with best params...")
+                # Train finale con migliori parametri trovati
+                print(f"    Training {architecture} with best params: {best_config['best_params']}")
                 
                 try:
                     ensemble = EnsembleArchitectures(X_train.shape[1], 3)
                     final_model = ensemble.create_architecture(architecture)
                     
-                    # Compile con best params
+                    # Compile con migliori parametri trovati
                     optimizer = tf.keras.optimizers.Adam(
                         learning_rate=best_config['best_params']['learning_rate']
                     )
@@ -398,13 +421,22 @@ class NestedCVRichterTrainer:
                         metrics=['accuracy']
                     )
                     
-                    # Train con early stopping
+                    # Train esteso con early stopping meno aggressivo e progress bar
                     early_stopping = tf.keras.callbacks.EarlyStopping(
-                        patience=15, restore_best_weights=True, verbose=0
+                        patience=20, restore_best_weights=True, verbose=0
+                    )
+                    
+                    # Progress callback per training individuale con 200 epoche
+                    progress_callback = tf.keras.callbacks.LambdaCallback(
+                        on_epoch_end=lambda epoch, logs: progress_bar.set_postfix({
+                            'epoch': f'{epoch+1}/200',
+                            'loss': f'{logs.get("loss", 0):.4f}',
+                            'val_acc': f'{logs.get("val_accuracy", 0):.4f}'
+                        })
                     )
                     
                     # Split train per validation durante final training
-                    val_split = 0.2
+                    val_split = 0.15  # Ridotto validation split
                     n_val = int(len(X_train) * val_split)
                     
                     # Shuffle indices per validation split
@@ -420,9 +452,9 @@ class NestedCVRichterTrainer:
                     final_model.fit(
                         X_final_train, y_final_train,
                         validation_data=(X_final_val, y_final_val),
-                        epochs=100,
+                        epochs=200,  # Massimo training per performance ottimali
                         batch_size=best_config['best_params']['batch_size'],
-                        callbacks=[early_stopping],
+                        callbacks=[early_stopping, progress_callback],
                         verbose=0
                     )
                     
@@ -437,7 +469,7 @@ class NestedCVRichterTrainer:
                         'outer_fold': outer_fold,
                         'architecture': architecture,
                         'best_params': best_config['best_params'],
-                        'inner_cv_f1': best_config['best_inner_f1'],
+                        'inner_search_f1': best_config['best_inner_f1'],
                         'final_test_f1': test_f1,
                         'model': final_model
                     }
@@ -451,7 +483,7 @@ class NestedCVRichterTrainer:
                         'outer_fold': outer_fold,
                         'architecture': architecture,
                         'best_params': best_config['best_params'],
-                        'inner_cv_f1': best_config['best_inner_f1'],
+                        'inner_search_f1': best_config['best_inner_f1'],
                         'final_test_f1': 0.33,
                         'model': None
                     }
@@ -483,7 +515,7 @@ class NestedCVRichterTrainer:
             {
                 'outer_fold': r['outer_fold'],
                 'architecture': r['architecture'],
-                'inner_cv_f1': r['inner_cv_f1'],
+                'inner_search_f1': r.get('inner_search_f1', 0.0),
                 'final_test_f1': r['final_test_f1'],
                 'has_model': r['model'] is not None
             }
@@ -493,7 +525,7 @@ class NestedCVRichterTrainer:
         # Statistiche per architettura
         arch_stats = df_results.groupby('architecture').agg({
             'final_test_f1': ['mean', 'std', 'count'],
-            'inner_cv_f1': ['mean', 'std'],
+            'inner_search_f1': ['mean', 'std'],
             'has_model': 'sum'
         }).round(4)
         
@@ -559,28 +591,31 @@ class NestedCVRichterTrainer:
             model_path = path / f"model_{i+1}_{result['architecture']}_fold{result['outer_fold']}.keras"
             result['model'].save(model_path)
         
-        # Config completo
+        # Config completo con conversione tipi per JSON
         config = {
             'methodology': 'nested_cv',
-            'final_f1_score': self.final_f1,
-            'target_achieved': self.final_f1 >= self.target_f1,
-            'ensemble_size': len(self.best_models),
+            'final_f1_score': float(self.final_f1),
+            'target_achieved': bool(self.final_f1 >= self.target_f1),
+            'ensemble_size': int(len(self.best_models)),
             'anti_leakage_summary': self.leakage_detector.get_summary(),
             'selected_models': [
                 {
-                    'architecture': r['architecture'],
-                    'outer_fold': r['outer_fold'],
+                    'architecture': str(r['architecture']),
+                    'outer_fold': int(r['outer_fold']),
                     'best_params': r['best_params'],
-                    'inner_cv_f1': r['inner_cv_f1'],
-                    'final_test_f1': r['final_test_f1']
+                    'inner_search_f1': float(r.get('inner_search_f1', 0.0)),
+                    'final_test_f1': float(r['final_test_f1'])
                 }
                 for r in self.best_models
             ],
-            'hyperparameter_grids': self.hyperparameter_grids
+            'random_search_config': {
+                'search_space': self.random_search_space,
+                'n_combinations': self.n_random_search
+            }
         }
         
         with open(path / "nested_cv_config.json", 'w') as f:
-            json.dump(config, f, indent=2)
+            json.dump(config, f, indent=2, default=str)
         
         print(f"Nested CV results saved to: {path}")
         return path

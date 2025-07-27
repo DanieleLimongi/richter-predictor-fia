@@ -1,0 +1,294 @@
+{
+  "methodology": "nested_cv",
+  "final_f1_score": 0.7022658205160052,
+  "target_achieved": false,
+  "ensemble_size": 8,
+  "anti_leakage_summary": {
+    "total_splits_validated": 8,
+    "preprocessing_fits": 16,
+    "splits_history": [
+      {
+        "fold": "outer_fold_1",
+        "train_size": 195450,
+        "val_size": 65151,
+        "train_min": "0",
+        "train_max": "260599",
+        "val_min": "5",
+        "val_max": "260600"
+      },
+      {
+        "fold": "preprocessing_outer_fold_1",
+        "train_size": 195450,
+        "val_size": 65151,
+        "train_min": "0",
+        "train_max": "260599",
+        "val_min": "5",
+        "val_max": "260600"
+      },
+      {
+        "fold": "outer_fold_2",
+        "train_size": 195451,
+        "val_size": 65150,
+        "train_min": "0",
+        "train_max": "260600",
+        "val_min": "1",
+        "val_max": "260594"
+      },
+      {
+        "fold": "preprocessing_outer_fold_2",
+        "train_size": 195451,
+        "val_size": 65150,
+        "train_min": "0",
+        "train_max": "260600",
+        "val_min": "1",
+        "val_max": "260594"
+      },
+      {
+        "fold": "outer_fold_3",
+        "train_size": 195451,
+        "val_size": 65150,
+        "train_min": "1",
+        "train_max": "260600",
+        "val_min": "0",
+        "val_max": "260599"
+      },
+      {
+        "fold": "preprocessing_outer_fold_3",
+        "train_size": 195451,
+        "val_size": 65150,
+        "train_min": "1",
+        "train_max": "260600",
+        "val_min": "0",
+        "val_max": "260599"
+      },
+      {
+        "fold": "outer_fold_4",
+        "train_size": 195451,
+        "val_size": 65150,
+        "train_min": "0",
+        "train_max": "260600",
+        "val_min": "2",
+        "val_max": "260597"
+      },
+      {
+        "fold": "preprocessing_outer_fold_4",
+        "train_size": 195451,
+        "val_size": 65150,
+        "train_min": "0",
+        "train_max": "260600",
+        "val_min": "2",
+        "val_max": "260597"
+      }
+    ],
+    "preprocessing_history": [
+      {
+        "component": "AdvancedFeatureEngineer",
+        "fold": "outer_fold_1",
+        "train_indices_hash": -791212250466457293,
+        "train_size": 195450,
+        "timestamp": "2025-07-27T14:07:00.079664"
+      },
+      {
+        "component": "RichterPreprocessingPipeline",
+        "fold": "outer_fold_1",
+        "train_indices_hash": -791212250466457293,
+        "train_size": 195450,
+        "timestamp": "2025-07-27T14:07:02.017701"
+      },
+      {
+        "component": "AdvancedFeatureEngineer_fallback",
+        "fold": "outer_fold_1",
+        "train_indices_hash": -791212250466457293,
+        "train_size": 195450,
+        "timestamp": "2025-07-27T14:07:03.889765"
+      },
+      {
+        "component": "StandardScaler_fallback",
+        "fold": "outer_fold_1",
+        "train_indices_hash": -791212250466457293,
+        "train_size": 195450,
+        "timestamp": "2025-07-27T14:07:06.006064"
+      },
+      {
+        "component": "AdvancedFeatureEngineer",
+        "fold": "outer_fold_2",
+        "train_indices_hash": -4756854685429218267,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:15:15.423950"
+      },
+      {
+        "component": "RichterPreprocessingPipeline",
+        "fold": "outer_fold_2",
+        "train_indices_hash": -4756854685429218267,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:15:16.764245"
+      },
+      {
+        "component": "AdvancedFeatureEngineer_fallback",
+        "fold": "outer_fold_2",
+        "train_indices_hash": -4756854685429218267,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:15:17.104333"
+      },
+      {
+        "component": "StandardScaler_fallback",
+        "fold": "outer_fold_2",
+        "train_indices_hash": -4756854685429218267,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:15:19.483848"
+      },
+      {
+        "component": "AdvancedFeatureEngineer",
+        "fold": "outer_fold_3",
+        "train_indices_hash": 3223770997560714367,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:23:28.267465"
+      },
+      {
+        "component": "RichterPreprocessingPipeline",
+        "fold": "outer_fold_3",
+        "train_indices_hash": 3223770997560714367,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:23:29.690774"
+      },
+      {
+        "component": "AdvancedFeatureEngineer_fallback",
+        "fold": "outer_fold_3",
+        "train_indices_hash": 3223770997560714367,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:23:30.050492"
+      },
+      {
+        "component": "StandardScaler_fallback",
+        "fold": "outer_fold_3",
+        "train_indices_hash": 3223770997560714367,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:23:32.083242"
+      },
+      {
+        "component": "AdvancedFeatureEngineer",
+        "fold": "outer_fold_4",
+        "train_indices_hash": -304768530053983878,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:31:50.647064"
+      },
+      {
+        "component": "RichterPreprocessingPipeline",
+        "fold": "outer_fold_4",
+        "train_indices_hash": -304768530053983878,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:31:52.147791"
+      },
+      {
+        "component": "AdvancedFeatureEngineer_fallback",
+        "fold": "outer_fold_4",
+        "train_indices_hash": -304768530053983878,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:31:52.735793"
+      },
+      {
+        "component": "StandardScaler_fallback",
+        "fold": "outer_fold_4",
+        "train_indices_hash": -304768530053983878,
+        "train_size": 195451,
+        "timestamp": "2025-07-27T14:31:54.790390"
+      }
+    ]
+  },
+  "selected_models": [
+    {
+      "architecture": "regularized",
+      "outer_fold": 3,
+      "best_params": {
+        "batch_size": 2048,
+        "learning_rate": 0.001,
+        "dropout_rate": 0.3,
+        "l2_reg": 0.0001
+      },
+      "final_test_f1": 0.7083499616270146
+    },
+    {
+      "architecture": "regularized",
+      "outer_fold": 1,
+      "best_params": {
+        "batch_size": 2048,
+        "learning_rate": 0.001,
+        "dropout_rate": 0.3,
+        "l2_reg": 0.0001
+      },
+      "final_test_f1": 0.7066001534919417
+    },
+    {
+      "architecture": "swish_activation",
+      "outer_fold": 2,
+      "best_params": {
+        "batch_size": 2048,
+        "learning_rate": 0.001,
+        "dropout_rate": 0.3,
+        "l2_reg": 0.0001
+      },
+      "final_test_f1": 0.7055564082885648
+    },
+    {
+      "architecture": "swish_activation",
+      "outer_fold": 0,
+      "best_params": {
+        "batch_size": 2048,
+        "learning_rate": 0.001,
+        "dropout_rate": 0.3,
+        "l2_reg": 0.0001
+      },
+      "final_test_f1": 0.7047474328866786
+    },
+    {
+      "architecture": "wide_shallow",
+      "outer_fold": 2,
+      "best_params": {
+        "batch_size": 2048,
+        "learning_rate": 0.001,
+        "dropout_rate": 0.3,
+        "l2_reg": 0.0001
+      },
+      "final_test_f1": 0.6997237145049885
+    },
+    {
+      "architecture": "wide_shallow",
+      "outer_fold": 3,
+      "best_params": {
+        "batch_size": 2048,
+        "learning_rate": 0.001,
+        "dropout_rate": 0.3,
+        "l2_reg": 0.0001
+      },
+      "final_test_f1": 0.6981120491174213
+    },
+    {
+      "architecture": "deep_narrow",
+      "outer_fold": 3,
+      "best_params": {
+        "batch_size": 2048,
+        "learning_rate": 0.001,
+        "dropout_rate": 0.3,
+        "l2_reg": 0.0001
+      },
+      "final_test_f1": 0.6978204144282425
+    },
+    {
+      "architecture": "deep_narrow",
+      "outer_fold": 0,
+      "best_params": {
+        "batch_size": 2048,
+        "learning_rate": 0.001,
+        "dropout_rate": 0.3,
+        "l2_reg": 0.0001
+      },
+      "final_test_f1": 0.6970115577658056
+    }
+  ],
+  "training_params": {
+    "batch_size": 2048,
+    "learning_rate": 0.001,
+    "dropout_rate": 0.3,
+    "l2_reg": 0.0001
+  }
+}
