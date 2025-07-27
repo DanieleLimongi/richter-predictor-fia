@@ -53,8 +53,8 @@ class TestEnsembleArchitectures(unittest.TestCase):
         for arch in expected_archs:
             self.assertIn(arch, archs)
         
-        print(f"         ✅ Input: {self.input_dim} → Output: {self.n_classes}")
-        print(f"         ✅ Architectures: {len(archs)}")
+        print(f"         Input: {self.input_dim} -> Output: {self.n_classes}")
+        print(f"         Architectures: {len(archs)}")
     
     def test_02_individual_architectures(self):
         """Test 2: Creazione singole architetture"""
@@ -85,7 +85,7 @@ class TestEnsembleArchitectures(unittest.TestCase):
                 'params': model.count_params()
             }
         
-        print(f"         ✅ All {len(results)} architectures created")
+        print(f"         All {len(results)} architectures created")
         for name, stats in results.items():
             print(f"           - {name}: {stats['layers']} layers, {stats['params']:,} params")
     
@@ -120,9 +120,9 @@ class TestEnsembleArchitectures(unittest.TestCase):
         # Verifica diversità (tutte architetture diverse)
         self.assertEqual(len(set(arch_names)), 6)
         
-        print(f"         ✅ Ensemble: {len(models)} diverse architectures")
-        print(f"         ✅ Total parameters: {total_params:,}")
-        print(f"         ✅ Architectures: {arch_names}")
+        print(f"         Ensemble: {len(models)} diverse architectures")
+        print(f"         Total parameters: {total_params:,}")
+        print(f"         Architectures: {arch_names}")
     
     def test_04_optimizers_and_losses(self):
         """Test 4: Ottimizzatori e loss functions"""
@@ -148,9 +148,9 @@ class TestEnsembleArchitectures(unittest.TestCase):
         self.assertGreaterEqual(focal_count, 2)
         self.assertGreaterEqual(standard_count, 2)
         
-        print(f"         ✅ Optimizers: {len(optimizers)} ({len(unique_types)} types)")
-        print(f"         ✅ Loss functions: {focal_count} focal + {standard_count} standard")
-        print(f"         ✅ Optimizer types: {unique_types}")
+        print(f"         Optimizers: {len(optimizers)} ({len(unique_types)} types)")
+        print(f"         Loss functions: {focal_count} focal + {standard_count} standard")
+        print(f"         Optimizer types: {unique_types}")
     
     def test_05_model_compilation(self):
         """Test 5: Compilazione modelli"""
@@ -181,8 +181,8 @@ class TestEnsembleArchitectures(unittest.TestCase):
             except Exception as e:
                 self.fail(f"Compilation failed for {arch_name}: {e}")
         
-        print(f"         ✅ Compiled models: {compiled_count}/3")
-        print(f"         ✅ All models ready for training")
+        print(f"         Compiled models: {compiled_count}/3")
+        print(f"         All models ready for training")
     
     def test_06_error_handling(self):
         """Test 6: Gestione errori"""
@@ -199,8 +199,8 @@ class TestEnsembleArchitectures(unittest.TestCase):
         with self.assertRaises(ValueError):
             invalid_ensemble = EnsembleArchitectures(input_dim=100, n_classes=0)
         
-        print(f"         ✅ Invalid architecture: properly rejected")
-        print(f"         ✅ Invalid dimensions: properly handled")
+        print(f"         Invalid architecture: properly rejected")
+        print(f"         Invalid dimensions: properly handled")
     
     def test_07_backward_compatibility(self):
         """Test 7: Compatibilità funzioni legacy"""
@@ -229,8 +229,8 @@ class TestEnsembleArchitectures(unittest.TestCase):
         self.assertEqual(pred1.shape, (5, 3))
         self.assertEqual(pred2.shape, (5, 3))
         
-        print(f"         ✅ Legacy wrapper functions: working")
-        print(f"         ✅ Backward compatibility: maintained")
+        print(f"         Legacy wrapper functions: working")
+        print(f"         Backward compatibility: maintained")
     
     def test_08_ensemble_diversity(self):
         """Test 8: Verifica diversità ensemble"""
@@ -258,15 +258,15 @@ class TestEnsembleArchitectures(unittest.TestCase):
         self.assertLess(avg_correlation, 0.8, 
                        f"Models too similar: avg correlation {avg_correlation:.3f}")
         
-        print(f"         ✅ Model diversity: avg correlation {avg_correlation:.3f}")
-        print(f"         ✅ Ensemble diversity: {'HIGH' if avg_correlation < 0.6 else 'MEDIUM'}")
+        print(f"         Model diversity: avg correlation {avg_correlation:.3f}")
+        print(f"         Ensemble diversity: {'HIGH' if avg_correlation < 0.6 else 'MEDIUM'}")
 
 
 def run_ensemble_tests():
     """Esegui tutti i test per EnsembleArchitectures"""
-    print("\n🎯 RICHTER PREDICTOR - ENSEMBLE ARCHITECTURES TEST SUITE")
+    print("\nRICHTER PREDICTOR - ENSEMBLE ARCHITECTURES TEST SUITE")
     print("=" * 70)
-    print("🔧 Testing EnsembleArchitectures class...")
+    print("Testing EnsembleArchitectures class...")
     
     # Crea test suite
     loader = unittest.TestLoader()
@@ -278,7 +278,7 @@ def run_ensemble_tests():
     
     # Summary dettagliato
     print("=" * 70)
-    print("📊 ENSEMBLE ARCHITECTURES TEST SUMMARY:")
+    print("ENSEMBLE ARCHITECTURES TEST SUMMARY:")
     print(f"   Tests run: {result.testsRun}")
     print(f"   Failures: {len(result.failures)}")
     print(f"   Errors: {len(result.errors)}")
@@ -287,22 +287,22 @@ def run_ensemble_tests():
     print(f"   Success rate: {success_rate:.1f}%")
     
     if result.failures:
-        print("❌ FAILURES:")
+        print("FAILURES:")
         for test, traceback in result.failures:
             print(f"   {test}")
             print(f"   {traceback}")
     
     if result.errors:
-        print("💥 ERRORS:")
+        print("ERRORS:")
         for test, traceback in result.errors:
             print(f"   {test}")
             print(f"   {traceback}")
     
     if not result.failures and not result.errors:
-        print("🎉 ALL ENSEMBLE ARCHITECTURE TESTS PASSED!")
-        print("🚀 EnsembleArchitectures class is ready for production!")
+        print("ALL ENSEMBLE ARCHITECTURE TESTS PASSED!")
+        print("EnsembleArchitectures class is ready for production!")
     else:
-        print("⚠️  Some tests failed. Please check the errors above.")
+        print("WARNING: Some tests failed. Please check the errors above.")
     
     print("=" * 70)
     

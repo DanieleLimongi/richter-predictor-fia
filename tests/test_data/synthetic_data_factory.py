@@ -309,7 +309,7 @@ class TestDataValidator:
         """Stampa report di validazione"""
         results = TestDataValidator.validate_dataset(df)
         
-        print("📊 DATA VALIDATION REPORT")
+        print("DATA VALIDATION REPORT")
         print("=" * 40)
         print(f"Dataset shape: {df.shape}")
         print(f"Columns: {len(df.columns)}")
@@ -317,7 +317,7 @@ class TestDataValidator:
         print("\nValidation Results:")
         
         for check, passed in results.items():
-            status = "✅" if passed else "❌"
+            status = "PASS" if passed else "FAIL"
             print(f"  {status} {check}: {passed}")
         
         # Summary
@@ -326,9 +326,9 @@ class TestDataValidator:
         print(f"\nSummary: {passed_checks}/{total_checks} checks passed")
         
         if passed_checks == total_checks:
-            print("🎯 All validations passed!")
+            print("All validations passed!")
         else:
-            print("⚠️  Some validations failed!")
+            print("WARNING: Some validations failed!")
 
 
 # Funzioni di utilità per backward compatibility
@@ -344,7 +344,7 @@ def create_test_files(temp_dir, n_samples=100):
 
 if __name__ == "__main__":
     # Test della factory
-    print("🧪 Testing SyntheticDataFactory...")
+    print("Testing SyntheticDataFactory...")
     
     # Test dataset base
     df = SyntheticDataFactory.create_building_dataset(n_samples=100)
@@ -354,13 +354,13 @@ if __name__ == "__main__":
     
     # Test dataset minimale
     minimal_df = SyntheticDataFactory.create_minimal_dataset()
-    print(f"📋 Minimal dataset: {minimal_df.shape}")
+    print(f"Minimal dataset: {minimal_df.shape}")
     print(minimal_df.head())
     
     print("\n" + "=" * 50)
     
     # Test train/test split
     train_df, test_df = SyntheticDataFactory.create_train_test_split(n_samples=200)
-    print(f"📊 Train/Test split: {train_df.shape} / {test_df.shape}")
+    print(f"Train/Test split: {train_df.shape} / {test_df.shape}")
     
-    print("\n🎯 SyntheticDataFactory test completed!")
+    print("\nSyntheticDataFactory test completed!")

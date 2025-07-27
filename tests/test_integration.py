@@ -77,7 +77,7 @@ class TestRichterIntegration(unittest.TestCase):
         # Test che i metodi fondamentali esistano
         self.assertTrue(hasattr(analyzer, 'load_data'))
         
-        print("         ✅ DataAnalyzer integration OK")
+        print("         DataAnalyzer integration OK")
     
     def test_02_feature_engineering_integration(self):
         """Test AdvancedFeatureEngineer integration"""
@@ -98,8 +98,8 @@ class TestRichterIntegration(unittest.TestCase):
         numeric_cols = df_enhanced.select_dtypes(include=[np.number]).columns
         self.assertGreaterEqual(len(numeric_cols), 15)  # Almeno 15 colonne numeriche
         
-        print(f"         ✅ Features: {len(self.test_data.columns)} → {len(df_enhanced.columns)}")
-        print("         ✅ AdvancedFeatureEngineer integration OK")
+        print(f"         Features: {len(self.test_data.columns)} -> {len(df_enhanced.columns)}")
+        print("         AdvancedFeatureEngineer integration OK")
         
         return df_enhanced
     
@@ -162,15 +162,15 @@ class TestRichterIntegration(unittest.TestCase):
             self.assertFalse(np.isnan(X_final).any())
             self.assertFalse(np.isinf(X_final).any())
             
-            print(f"         ✅ Processed shape: {X_final.shape}")
-            print("         ✅ RichterPreprocessingPipeline integration OK")
+            print(f"         Processed shape: {X_final.shape}")
+            print("         RichterPreprocessingPipeline integration OK")
             
             return X_final, y
             
         except Exception as e:
             # Fallback test
-            print(f"         ⚠️  Professional preprocessing failed: {e}")
-            print("         ✅ Fallback preprocessing test OK")
+            print(f"         WARNING: Professional preprocessing failed: {e}")
+            print("         Fallback preprocessing test OK")
             return None, None
     
     def test_04_ensemble_architectures_integration(self):
@@ -207,9 +207,9 @@ class TestRichterIntegration(unittest.TestCase):
         self.assertEqual(len(opts), 6)
         self.assertEqual(len(losses), 6)
         
-        print(f"         ✅ Architectures: {len(archs)} available")
-        print(f"         ✅ Models created: {models_created}/3 tested")
-        print("         ✅ EnsembleArchitectures integration OK")
+        print(f"         Architectures: {len(archs)} available")
+        print(f"         Models created: {models_created}/3 tested")
+        print("         EnsembleArchitectures integration OK")
     
     def test_05_end_to_end_pipeline(self):
         """Test end-to-end pipeline integration"""
@@ -304,10 +304,10 @@ class TestRichterIntegration(unittest.TestCase):
             prob_sums = np.sum(pred, axis=1)
             np.testing.assert_allclose(prob_sums, 1.0, rtol=1e-5)
             
-            print(f"         ✅ Data flow: {self.test_data.shape} → {df_enhanced.shape} → {X.shape}")
-            print(f"         ✅ Preprocessing: {preprocessing_method}")
-            print(f"         ✅ Model: {arch_name} trained and tested")
-            print("         ✅ End-to-End Pipeline integration OK")
+            print(f"         Data flow: {self.test_data.shape} -> {df_enhanced.shape} -> {X.shape}")
+            print(f"         Preprocessing: {preprocessing_method}")
+            print(f"         Model: {arch_name} trained and tested")
+            print("         End-to-End Pipeline integration OK")
             
             return True
             
@@ -337,15 +337,15 @@ class TestRichterIntegration(unittest.TestCase):
         self.assertEqual(len(df_enhanced), len(large_data))
         self.assertGreater(len(df_enhanced.columns), len(large_data.columns))
         
-        print(f"         ✅ Large dataset: {initial_shape} → {df_enhanced.shape}")
-        print("         ✅ Realistic Data Volumes integration OK")
+        print(f"         Large dataset: {initial_shape} -> {df_enhanced.shape}")
+        print("         Realistic Data Volumes integration OK")
 
 
 def run_integration_tests():
     """Esegue tutti i test di integrazione"""
-    print("\n🔗 RICHTER PREDICTOR - INTEGRATION TESTS")
+    print("\nRICHTER PREDICTOR - INTEGRATION TESTS")
     print("=" * 60)
-    print("🔧 Testing complete component integration...")
+    print("Testing complete component integration...")
     
     # Crea test suite
     loader = unittest.TestLoader()
@@ -357,7 +357,7 @@ def run_integration_tests():
     
     # Summary
     print("=" * 60)
-    print("📊 INTEGRATION TEST SUMMARY:")
+    print("INTEGRATION TEST SUMMARY:")
     print(f"   Tests run: {result.testsRun}")
     print(f"   Failures: {len(result.failures)}")
     print(f"   Errors: {len(result.errors)}")
@@ -366,20 +366,20 @@ def run_integration_tests():
     print(f"   Success rate: {success_rate:.1f}%")
     
     if result.failures:
-        print("❌ FAILURES:")
+        print("FAILURES:")
         for test, traceback in result.failures:
             print(f"   {test}: {traceback}")
     
     if result.errors:
-        print("💥 ERRORS:")
+        print("ERRORS:")
         for test, traceback in result.errors:
             print(f"   {test}: {traceback}")
     
     if not result.failures and not result.errors:
-        print("🎉 ALL INTEGRATION TESTS PASSED!")
-        print("🚀 Complete pipeline is ready for production!")
+        print("ALL INTEGRATION TESTS PASSED!")
+        print("Complete pipeline is ready for production!")
     else:
-        print("⚠️  Some integration tests failed. Check components compatibility.")
+        print("WARNING: Some integration tests failed. Check components compatibility.")
     
     print("=" * 60)
     

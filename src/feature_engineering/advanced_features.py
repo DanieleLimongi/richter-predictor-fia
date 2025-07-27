@@ -24,7 +24,7 @@ class AdvancedFeatureEngineer:
         self.geo_target_means = {}
         self.material_risk_scores = {}
         self.polynomial_features_names = []  # Per tracking polynomial features nel test
-        self.polynomial_feature_medians = {}  # ✅ NUOVO: Salva mediane per test
+        self.polynomial_feature_medians = {}  # NUOVO: Salva mediane per test
         self.binning_info = {}  # Per tracking binning cuts
         self.created_features = set()  # Track tutte le features create in fit_transform
         self.fitted = False
@@ -122,7 +122,7 @@ class AdvancedFeatureEngineer:
         if not geo_cols or target_col not in df.columns:
             return df
         
-        # ✅ SEMPLIFICAZIONE: Solo standard encoding per robustezza
+        # SEMPLIFICAZIONE: Solo standard encoding per robustezza
         for geo_col in geo_cols:
             try:
                 geo_stats = df.groupby(geo_col)[target_col].agg(['mean', 'count']).fillna(0)
@@ -143,7 +143,7 @@ class AdvancedFeatureEngineer:
                     
                     mapping[geo_value] = smoothed_mean
                 
-                # ✅ Salva mapping con nome semplice
+                # Salva mapping con nome semplice
                 self.geo_target_means[geo_col] = mapping
                 
                 # Crea feature con fallback robusto
@@ -195,7 +195,7 @@ class AdvancedFeatureEngineer:
             # Calcola correlazioni solo per colonne valide
             valid_numeric_cols = []
             for col in numeric_cols:
-                if not df[col].isna().all() and df[col].notna().sum() > 10:  # ✅ Soglia minima
+                if not df[col].isna().all() and df[col].notna().sum() > 10:  # Soglia minima
                     valid_numeric_cols.append(col)
             
             if len(valid_numeric_cols) < 2:
@@ -211,13 +211,13 @@ class AdvancedFeatureEngineer:
                 return df
             
             # Top features per polynomial
-            top_features = correlations.head(6).index.tolist()  # ✅ Ridotto a 6 per stabilità
+            top_features = correlations.head(6).index.tolist()  # Ridotto a 6 per stabilità
             
             if len(top_features) >= 2:
                 # Preprocessing robusto per polynomial
                 poly_data = df[top_features].copy()
                 
-                # ✅ CORREZIONE: Salva mediane per test consistency
+                # CORREZIONE: Salva mediane per test consistency
                 for col in top_features:
                     if col not in self.polynomial_feature_medians:
                         median_val = poly_data[col].median()
@@ -230,7 +230,7 @@ class AdvancedFeatureEngineer:
                     # Riempi NaN con mediana salvata
                     poly_data[col] = poly_data[col].fillna(self.polynomial_feature_medians[col])
                 
-                # ✅ CORREZIONE: Limita interazioni per evitare esplosione features
+                # CORREZIONE: Limita interazioni per evitare esplosione features
                 poly = PolynomialFeatures(
                     degree=2, 
                     include_bias=False, 
@@ -246,12 +246,12 @@ class AdvancedFeatureEngineer:
                     new_poly_features = poly_features[:, original_count:]
                     new_poly_names = [f"poly_{name}" for name in poly_names[original_count:]]
                     
-                    # ✅ CORREZIONE: Limita severo per evitare overfitting
+                    # CORREZIONE: Limita severo per evitare overfitting
                     if len(new_poly_names) > max_features:
                         # Selezione più robusta
                         poly_df_temp = pd.DataFrame(new_poly_features, columns=new_poly_names)
                         
-                        # ✅ Check correlazioni valide
+                        # Check correlazioni valide
                         poly_corr = poly_df_temp.corrwith(df[target_col]).abs()
                         poly_corr = poly_corr.dropna().sort_values(ascending=False)
                         
@@ -266,7 +266,7 @@ class AdvancedFeatureEngineer:
                                 new_poly_features = new_poly_features[:, selected_indices]
                                 new_poly_names = [new_poly_names[i] for i in selected_indices]
                     
-                    # ✅ CORREZIONE: Verifica che non ci siano inf/nan
+                    # CORREZIONE: Verifica che non ci siano inf/nan
                     if len(new_poly_names) > 0:
                         poly_df = pd.DataFrame(new_poly_features, columns=new_poly_names, index=df.index)
                         
@@ -274,7 +274,7 @@ class AdvancedFeatureEngineer:
                         poly_df = poly_df.replace([np.inf, -np.inf], np.nan)
                         poly_df = poly_df.fillna(0.0)
                         
-                        # ✅ Verifica finale che tutte le colonne siano numeriche
+                        # Verifica finale che tutte le colonne siano numeriche
                         for col in poly_df.columns:
                             if not pd.api.types.is_numeric_dtype(poly_df[col]):
                                 poly_df[col] = pd.to_numeric(poly_df[col], errors='coerce').fillna(0.0)
@@ -301,7 +301,7 @@ class AdvancedFeatureEngineer:
             if col != 'damage_grade' and df[col].nunique() > 20:
                 
                 try:
-                    # ✅ CORREZIONE: Usa percentili robusti
+                    # CORREZIONE: Usa percentili robusti
                     col_data = df[col].dropna()
                     if len(col_data) < 10:
                         continue
@@ -310,13 +310,13 @@ class AdvancedFeatureEngineer:
                     percentiles = [0, 20, 40, 60, 80, 100]
                     bin_edges = np.percentile(col_data, percentiles)
                     
-                    # ✅ Rimuovi duplicati dai bin edges
+                    # Rimuovi duplicati dai bin edges
                     bin_edges = np.unique(bin_edges)
                     
                     if len(bin_edges) < 3:  # Almeno 2 bin
                         continue
                     
-                    # ✅ Usa pd.cut con handling robusto
+                    # Usa pd.cut con handling robusto
                     binned_values = pd.cut(
                         df[col], 
                         bins=bin_edges, 
@@ -327,7 +327,7 @@ class AdvancedFeatureEngineer:
                     
                     df[f'{col}_binned'] = binned_values.astype(float)
                     
-                    # ✅ Salva bin edges estesi per robustezza test
+                    # Salva bin edges estesi per robustezza test
                     if not self.fitted:
                         # Estendi range per coprire valori futuri
                         extended_min = bin_edges[0] - abs(bin_edges[0]) * 0.1 - 1e-6
@@ -441,14 +441,14 @@ class AdvancedFeatureEngineer:
         # 2. Binning con handling robusto
         df = self._apply_test_binning(df)
         
-        # 3. ✅ CORREZIONE: Polynomial features con valori reali (non dummy)
+        # 3. CORREZIONE: Polynomial features con valori reali (non dummy)
         if hasattr(self, 'polynomial_features_names') and self.polynomial_features_names:
             print("   Recreating polynomial features for test...")
             
             # Ricreiamo le stesse polynomial features usando le mediane salvate
             for poly_name in self.polynomial_features_names:
                 if poly_name not in df.columns:
-                    # ✅ Usa median invece di 0.0 per features più realistiche
+                    # Usa median invece di 0.0 per features più realistiche
                     median_value = 0.0  # Default sicuro
                     if 'age' in poly_name and 'area' in poly_name:
                         # Esempio di calcolo realistico basato su pattern comuni
@@ -456,7 +456,7 @@ class AdvancedFeatureEngineer:
                     
                     df[poly_name] = median_value
         
-        # 4. ✅ CORREZIONE: Geographic encoding semplificato
+        # 4. CORREZIONE: Geographic encoding semplificato
         global_mean = 2.0
         for geo_col, mapping in self.geo_target_means.items():
             if geo_col.startswith('geo_level_') and geo_col in df.columns:
@@ -467,11 +467,11 @@ class AdvancedFeatureEngineer:
             if material_col in df.columns:
                 df[f'{material_col}_risk_zscore'] = df[material_col].map(mapping).fillna(0)
         
-        # 6. ✅ CORREZIONE: Assicura che tutte le features create siano presenti
+        # 6. CORREZIONE: Assicura che tutte le features create siano presenti
         missing_features = self.created_features - set(df.columns)
         for missing_feature in missing_features:
             print(f"      Adding missing feature: {missing_feature}")
-            # ✅ Usa valori più realistici invece di sempre 0.0
+            # Usa valori più realistici invece di sempre 0.0
             if 'risk' in missing_feature:
                 df[missing_feature] = global_mean
             elif 'ratio' in missing_feature:
@@ -481,7 +481,7 @@ class AdvancedFeatureEngineer:
             else:
                 df[missing_feature] = 0.0
         
-        # 7. ✅ PULIZIA FINALE CRITICA per compatibilità modelli
+        # 7. PULIZIA FINALE CRITICA per compatibilità modelli
         print("   Final data cleaning for model compatibility...")
         
         # Rimuovi colonne non numeriche (se presenti)
@@ -496,7 +496,7 @@ class AdvancedFeatureEngineer:
         df = df.replace([np.inf, -np.inf], np.nan)
         df = df.fillna(0.0)
         
-        # ✅ Verifica finale: tutte le colonne devono essere float
+        # Verifica finale: tutte le colonne devono essere float
         for col in df.columns:
             if df[col].dtype not in ['float64', 'float32', 'int64', 'int32']:
                 df[col] = df[col].astype('float64')
@@ -515,7 +515,7 @@ class AdvancedFeatureEngineer:
                     bins = binning_config['bins']
                     labels = binning_config['labels']
                     
-                    # ✅ CORREZIONE: Usa cut robusto con out-of-bounds handling
+                    # CORREZIONE: Usa cut robusto con out-of-bounds handling
                     binned_values = pd.cut(
                         df[col], 
                         bins=bins, 
@@ -523,7 +523,7 @@ class AdvancedFeatureEngineer:
                         include_lowest=True
                     )
                     
-                    # ✅ Gestisci NaN (valori fuori range)
+                    # Gestisci NaN (valori fuori range)
                     binned_values = binned_values.astype(float)
                     
                     # Riempi NaN con valore medio

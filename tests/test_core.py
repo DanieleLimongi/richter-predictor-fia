@@ -53,7 +53,7 @@ class TestCoreConsolidated(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Setup globale condiviso per tutti i test"""
-        print("\n🔧 Setting up Core Consolidated Tests...")
+        print("\nSetting up Core Consolidated Tests...")
         
         # Usa factory per dati standardizzati
         cls.data_factory = SyntheticDataFactory()
@@ -71,16 +71,16 @@ class TestCoreConsolidated(unittest.TestCase):
                 full_data = analyzer.load_data()
                 cls.real_data = full_data.head(1000).copy()
                 cls.has_real_data = True
-                print(f"    ✅ Real data loaded: {cls.real_data.shape}")
+                print(f"    Real data loaded: {cls.real_data.shape}")
             else:
                 cls.has_real_data = False
                 cls.real_data = None
         except Exception as e:
             cls.has_real_data = False
             cls.real_data = None
-            print(f"    ⚠️  Real data not available: {e}")
+            print(f"    WARNING: Real data not available: {e}")
         
-        print(f"    ✅ Test datasets created:")
+        print(f"    Test datasets created:")
         print(f"       - Main dataset: {cls.test_data.shape}")
         print(f"       - Train/Test split: {cls.train_data.shape} / {cls.test_data_split.shape}")
         print(f"       - Missing values dataset: {cls.missing_data.shape}")
@@ -88,7 +88,7 @@ class TestCoreConsolidated(unittest.TestCase):
         # Valida qualità dati
         validation_results = TestDataValidator.validate_dataset(cls.test_data)
         all_passed = all(validation_results.values())
-        print(f"    {'✅' if all_passed else '⚠️ '} Data validation: {sum(validation_results.values())}/{len(validation_results)} checks passed")
+        print(f"    {'PASS' if all_passed else 'WARNING'} Data validation: {sum(validation_results.values())}/{len(validation_results)} checks passed")
     
     # ============================================================================
     # TEST FEATURE ENGINEERING (da test_core_functionality.py)
@@ -111,7 +111,7 @@ class TestCoreConsolidated(unittest.TestCase):
         )
         self.assertEqual(engineer_custom.target_encoding_smoothing, 100)
         
-        print("         ✅ Initialization successful")
+        print("         Initialization successful")
     
     @unittest.skipUnless(FEATURE_ENGINEERING_AVAILABLE, "Feature engineering modules not available")
     def test_02_seismic_domain_features(self):
@@ -143,7 +143,7 @@ class TestCoreConsolidated(unittest.TestCase):
                 # Verifica che non ci siano solo NaN
                 self.assertFalse(df_enhanced[feature].isnull().all())
         
-        print(f"         ✅ Created {len(df_enhanced.columns) - original_cols} new domain features")
+        print(f"         Created {len(df_enhanced.columns) - original_cols} new domain features")
     
     @unittest.skipUnless(FEATURE_ENGINEERING_AVAILABLE, "Feature engineering modules not available")
     def test_03_unified_geographic_encoding(self):
@@ -168,7 +168,7 @@ class TestCoreConsolidated(unittest.TestCase):
                 # Dovrebbero essere numerici
                 self.assertTrue(np.issubdtype(df_geo[feature].dtype, np.number))
         
-        print(f"         ✅ Created {len(geo_features)} geographic encoding features")
+        print(f"         Created {len(geo_features)} geographic encoding features")
     
     @unittest.skipUnless(FEATURE_ENGINEERING_AVAILABLE, "Feature engineering modules not available")
     def test_04_complete_fit_transform_pipeline(self):
@@ -201,8 +201,8 @@ class TestCoreConsolidated(unittest.TestCase):
         # Performance check
         self.assertLess(duration, 30, "Pipeline should complete in reasonable time")
         
-        print(f"         ✅ Pipeline completed in {duration:.2f}s")
-        print(f"         ✅ Features: {len(train_df.columns)} → {len(train_enhanced.columns)}")
+        print(f"         Pipeline completed in {duration:.2f}s")
+        print(f"         Features: {len(train_df.columns)} -> {len(train_enhanced.columns)}")
     
     # ============================================================================
     # TEST DATA UTILITIES (da test_utils.py consolidato)
@@ -239,8 +239,8 @@ class TestCoreConsolidated(unittest.TestCase):
             filtered = df[df['damage_grade'] == 2]
             self.assertGreaterEqual(len(filtered), 0)
         
-        print(f"         ✅ Data validation successful")
-        print(f"         ✅ Type conversions working")
+        print(f"         Data validation successful")
+        print(f"         Type conversions working")
     
     def test_06_missing_values_handling(self):
         """Test 6: Gestione valori mancanti"""
@@ -273,8 +273,8 @@ class TestCoreConsolidated(unittest.TestCase):
                 df_imputed[col].fillna(mean_val, inplace=True)
                 self.assertEqual(df_imputed[col].isnull().sum(), 0)
         
-        print(f"         ✅ Missing values detection working")
-        print(f"         ✅ Imputation strategies working")
+        print(f"         Missing values detection working")
+        print(f"         Imputation strategies working")
     
     # ============================================================================
     # TEST PREPROCESSING PIPELINE (da test_preprocessing_pipeline.py consolidato)
@@ -297,7 +297,7 @@ class TestCoreConsolidated(unittest.TestCase):
         pipeline.setup_preprocessors()
         self.assertIsNotNone(pipeline.preprocessors)
         
-        print(f"         ✅ Pipeline initialization successful")
+        print(f"         Pipeline initialization successful")
     
     @unittest.skipUnless(PREPROCESSING_AVAILABLE, "Preprocessing modules not available")
     def test_08_individual_preprocessors(self):
@@ -334,7 +334,7 @@ class TestCoreConsolidated(unittest.TestCase):
             if hasattr(numeric_transformed, 'shape'):
                 self.assertEqual(numeric_transformed.shape[1], len(available_numeric_features))
         
-        print(f"         ✅ Individual preprocessors working")
+        print(f"         Individual preprocessors working")
     
     # ============================================================================
     # TEST FILE I/O CONSOLIDATO (da test_utils.py)
@@ -388,7 +388,7 @@ class TestCoreConsolidated(unittest.TestCase):
             self.assertEqual(config_data, loaded_config)
             self.assertEqual(loaded_config['model_params']['learning_rate'], 0.001)
         
-        print(f"         ✅ CSV and JSON operations working")
+        print(f"         CSV and JSON operations working")
     
     # ============================================================================
     # TEST PERFORMANCE E SCALABILITÀ
@@ -424,8 +424,8 @@ class TestCoreConsolidated(unittest.TestCase):
         for ratio in time_ratios:
             self.assertLess(ratio, 10, "Should scale reasonably with data size")
         
-        print(f"         ✅ Performance tests passed")
-        print(f"         ✅ Scalability check: {sizes} → {[f'{t:.3f}s' for t in times]}")
+        print(f"         Performance tests passed")
+        print(f"         Scalability check: {sizes} -> {[f'{t:.3f}s' for t in times]}")
     
     # ============================================================================
     # TEST ROBUSTEZZA ED ERROR HANDLING
@@ -463,15 +463,15 @@ class TestCoreConsolidated(unittest.TestCase):
             validation_duplicate = TestDataValidator.validate_dataset(duplicate_df)
             self.assertFalse(validation_duplicate['unique_building_ids'])
         
-        print(f"         ✅ Error handling tests passed")
-        print(f"         ✅ Robustness checks working")
+        print(f"         Error handling tests passed")
+        print(f"         Robustness checks working")
 
 
 def run_core_consolidated_tests():
     """Esegue la suite consolidata di test core"""
-    print("\n🎯 RICHTER PREDICTOR - CORE CONSOLIDATED TEST SUITE")
+    print("\nRICHTER PREDICTOR - CORE CONSOLIDATED TEST SUITE")
     print("=" * 70)
-    print("🔧 Testing consolidated core functionality...")
+    print("Testing consolidated core functionality...")
     print("   Integrates: core_functionality + utils + preprocessing_pipeline")
     
     # Crea e esegui test suite
@@ -484,7 +484,7 @@ def run_core_consolidated_tests():
     
     # Summary completo
     print("\n" + "=" * 70)
-    print("📊 CORE CONSOLIDATED TEST SUMMARY:")
+    print("CORE CONSOLIDATED TEST SUMMARY:")
     print(f"   Tests run: {result.testsRun}")
     print(f"   Failures: {len(result.failures)}")
     print(f"   Errors: {len(result.errors)}")
@@ -493,27 +493,27 @@ def run_core_consolidated_tests():
     print(f"   Success rate: {success_rate:.1f}%")
     
     if result.failures:
-        print("\n❌ FAILURES:")
+        print("\nFAILURES:")
         for test, traceback in result.failures:
             print(f"   - {test}")
             print(f"     {traceback.split('AssertionError:')[-1].strip()}")
     
     if result.errors:
-        print("\n💥 ERRORS:")
+        print("\nERRORS:")
         for test, traceback in result.errors:
             print(f"   - {test}")
             print(f"     {traceback.split('Error:')[-1].strip()}")
     
     if not result.failures and not result.errors:
-        print("\n🎉 ALL CORE TESTS PASSED!")
-        print("✅ Feature engineering working")
-        print("✅ Data utilities working")  
-        print("✅ Preprocessing pipeline working")
-        print("✅ File operations working")
-        print("✅ Performance and scalability OK")
-        print("✅ Error handling and robustness OK")
+        print("\nALL CORE TESTS PASSED!")
+        print("Feature engineering working")
+        print("Data utilities working")  
+        print("Preprocessing pipeline working")
+        print("File operations working")
+        print("Performance and scalability OK")
+        print("Error handling and robustness OK")
     else:
-        print("\n⚠️  SOME CORE TESTS FAILED")
+        print("\nSOME CORE TESTS FAILED")
         print("Please check the failures and errors above")
     
     print("=" * 70)

@@ -11,24 +11,24 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Banner
-echo -e "${BLUE}🎯 RICHTER PREDICTOR - DOCKER UTILITY${NC}"
+echo -e "${BLUE}RICHTER PREDICTOR - DOCKER UTILITY${NC}"
 echo "=========================================="
 
 # Funzioni helper
 log_info() {
-    echo -e "${BLUE} $1${NC}"
+    echo -e "${BLUE}[INFO] $1${NC}"
 }
 
 log_success() {
-    echo -e "${GREEN} $1${NC}"
+    echo -e "${GREEN}[SUCCESS] $1${NC}"
 }
 
 log_warning() {
-    echo -e "${YELLOW}  $1${NC}"
+    echo -e "${YELLOW}[WARNING] $1${NC}"
 }
 
 log_error() {
-    echo -e "${RED} $1${NC}"
+    echo -e "${RED}[ERROR] $1${NC}"
 }
 
 # Funzione per verificare Docker
@@ -60,18 +60,32 @@ build_image() {
     log_success "Immagine creata con successo!"
 }
 
-# Funzione per training
+# Funzione per training avanzato
 run_training() {
-    log_info "Avvio training del modello..."
-    docker-compose run --rm richter-predictor python src/models/train_simple_holdout.py
+    log_info "Avvio training del modello avanzato..."
+    docker-compose run --rm richter-predictor python src/models/train_advanced_ensemble.py
     log_success "Training completato!"
 }
 
-# Funzione per submission - CORRETTA
+# Funzione per submission - basata su modelli esistenti
 run_submission() {
-    log_info "Creazione submission..."
-    docker-compose run --rm richter-predictor python create_submission.py
-    log_success "Submission creata!"
+    log_info "Creazione submission da modelli esistenti..."
+    docker-compose run --rm richter-predictor python -c "
+from pathlib import Path
+import os
+models_dir = Path('models')
+if models_dir.exists():
+    model_dirs = [d for d in models_dir.iterdir() if d.is_dir() and 'ensemble' in d.name]
+    if model_dirs:
+        latest_model = max(model_dirs, key=lambda x: x.stat().st_mtime)
+        print(f'Latest model found: {latest_model.name}')
+        print('Use this model for prediction/submission')
+    else:
+        print('No trained ensemble models found')
+else:
+    print('Models directory not found')
+"
+    log_success "Model status checked!"
 }
 
 # Funzione per shell interattiva
@@ -134,10 +148,10 @@ run_tests_quick() {
 # Funzione per validazione completa pre-deploy
 run_validation() {
     log_info "Validazione completa pre-deployment..."
-    echo "🔍 Step 1: Test suite completa"
+    echo "Step 1: Test suite completa"
     docker-compose run --rm richter-predictor python tests/run_tests.py --ci
     
-    echo "🔍 Step 2: Verifica preprocessing"
+    echo "Step 2: Verifica preprocessing"
     docker-compose run --rm richter-predictor python -c "
 from src.preprocessing.main_pipeline import RichterPreprocessingPipeline
 import pandas as pd
@@ -146,7 +160,7 @@ import numpy as np
 # Test rapido pipeline
 pipeline = RichterPreprocessingPipeline()
 pipeline.setup_preprocessors()
-print(' Pipeline inizializzata correttamente')
+print('Pipeline inizializzata correttamente')
 
 # Test con dati dummy
 dummy_data = pd.DataFrame({
@@ -156,35 +170,47 @@ dummy_data = pd.DataFrame({
 })
 pipeline.fit(dummy_data)
 result = pipeline.transform(dummy_data)
-print(' Pipeline preprocessing OK')
-print(f' Output shape validation: {type(result)}')
+print('Pipeline preprocessing OK')
+print(f'Output shape validation: {type(result)}')
 "
     
-    echo " Step 3: Verifica TensorFlow"
+    echo "Step 3: Verifica TensorFlow"
     docker-compose run --rm richter-predictor python -c "
 import tensorflow as tf
-print(f' TensorFlow version: {tf.__version__}')
-print(f' GPU available: {len(tf.config.list_physical_devices(\"GPU\"))} devices')
-print(' TensorFlow working correctly')
+print(f'TensorFlow version: {tf.__version__}')
+print(f'GPU available: {len(tf.config.list_physical_devices(\"GPU\"))} devices')
+print('TensorFlow working correctly')
 "
     
-    log_success "Validazione completa superata! "
+    log_success "Validazione completa superata!"
 }
 
-# Funzione per training con test pre/post
-run_training_with_validation() {
-    log_info "Training con validazione pre/post..."
-    
-    echo " Pre-training validation"
-    docker-compose run --rm richter-predictor python tests/run_tests.py --test preprocessing --quiet
-    
-    echo " Training modello"
-    docker-compose run --rm richter-predictor python src/models/train_final_nested_cv.py
+# Funzione per training con nested CV
+run_training_nested_cv() {
+    log_info "Training con Nested CV (anti-leakage)..."
+    docker-compose run --rm richter-predictor python src/models/train_nested_cv_ensemble.py
+    log_success "Training Nested CV completato!"
+}
 
-    echo " Post-training validation"
-    docker-compose run --rm richter-predictor python tests/run_tests.py --test models --quiet
-    
-    log_success "Training con validazione completato!"
+# Funzione per training semplice
+run_training_simple() {
+    log_info "Training semplice holdout..."
+    docker-compose run --rm richter-predictor python src/models/train_simple_holdout.py
+    log_success "Training semplice completato!"
+}
+
+# Funzione per test subset nested CV
+run_test_nested_cv() {
+    log_info "Test Nested CV su subset..."
+    docker-compose run --rm richter-predictor python test_nested_cv_subset.py
+    log_success "Test Nested CV completato!"
+}
+
+# Funzione per debug sparsity
+run_debug_sparsity() {
+    log_info "Debug data sparsity..."
+    docker-compose run --rm richter-predictor python debug_sparsity.py
+    log_success "Debug sparsity completato!"
 }
 
 # Funzione per cleanup
@@ -210,30 +236,33 @@ show_status() {
     docker system df
 }
 
-# Menu principale - AGGIORNATO CON TEST
+# Menu principale - AGGIORNATO
 show_menu() {
     echo ""
-    echo " COMANDI DISPONIBILI:"
+    echo "COMANDI DISPONIBILI:"
     echo "1)  setup         - Setup iniziale (build + directory)"
     echo "2)  build         - Build Docker image"
-    echo "3)  train         - Avvia training del modello"
-    echo "4)  train-val     - Training con validazione pre/post"
-    echo "5)  submit        - Crea submission finale"
-    echo "6)  shell         - Shell interattiva nel container"
-    echo "7)  analysis      - Esegui analisi dati"
-    echo "8)  eda           - Genera EDA e visualizzazioni"
-    echo "9)  test          - Test suite completa"
-    echo "10) test-prep     - Test preprocessing only"
-    echo "11) test-models   - Test modelli only"
-    echo "12) test-utils    - Test utilità only"
-    echo "13) test-ci       - Test suite CI/CD mode"
-    echo "14) test-quick    - Test rapidi"
-    echo "15) validate      - Validazione completa pre-deploy"
-    echo "16) logs          - Mostra logs"
-    echo "17) status        - Status container e spazio"
-    echo "18) cleanup       - Cleanup completo"
-    echo "19) help          - Mostra questo menu"
-    echo "20) exit          - Esci"
+    echo "3)  train         - Training ensemble avanzato"
+    echo "4)  train-nested  - Training con Nested CV"
+    echo "5)  train-simple  - Training semplice holdout"
+    echo "6)  test-nested   - Test Nested CV su subset"
+    echo "7)  debug-sparse  - Debug data sparsity"
+    echo "8)  submit        - Check modelli per submission"
+    echo "9)  shell         - Shell interattiva nel container"
+    echo "10) analysis      - Esegui analisi dati"
+    echo "11) eda           - Genera EDA e visualizzazioni"
+    echo "12) test          - Test suite completa"
+    echo "13) test-prep     - Test preprocessing only"
+    echo "14) test-models   - Test modelli only"
+    echo "15) test-utils    - Test utilità only"
+    echo "16) test-ci       - Test suite CI/CD mode"
+    echo "17) test-quick    - Test rapidi"
+    echo "18) validate      - Validazione completa pre-deploy"
+    echo "19) logs          - Mostra logs"
+    echo "20) status        - Status container e spazio"
+    echo "21) cleanup       - Cleanup completo"
+    echo "22) help          - Mostra questo menu"
+    echo "23) exit          - Esci"
     echo ""
 }
 
@@ -253,9 +282,21 @@ case "$1" in
         check_docker
         run_training
         ;;
-    train-val)
+    train-nested)
         check_docker
-        run_training_with_validation
+        run_training_nested_cv
+        ;;
+    train-simple)
+        check_docker
+        run_training_simple
+        ;;
+    test-nested)
+        check_docker
+        run_test_nested_cv
+        ;;
+    debug-sparse)
+        check_docker
+        run_debug_sparsity
         ;;
     submit)
         check_docker
@@ -318,28 +359,31 @@ case "$1" in
         ;;
     "")
         show_menu
-        read -p "Seleziona comando (1-20): " choice
+        read -p "Seleziona comando (1-23): " choice
         case $choice in
             1) $0 setup ;;
             2) $0 build ;;
             3) $0 train ;;
-            4) $0 train-val ;;
-            5) $0 submit ;;
-            6) $0 shell ;;
-            7) $0 analysis ;;
-            8) $0 eda ;;
-            9) $0 test ;;
-            10) $0 test-prep ;;
-            11) $0 test-models ;;
-            12) $0 test-utils ;;
-            13) $0 test-ci ;;
-            14) $0 test-quick ;;
-            15) $0 validate ;;
-            16) $0 logs ;;
-            17) $0 status ;;
-            18) $0 cleanup ;;
-            19) $0 help ;;
-            20) exit 0 ;;
+            4) $0 train-nested ;;
+            5) $0 train-simple ;;
+            6) $0 test-nested ;;
+            7) $0 debug-sparse ;;
+            8) $0 submit ;;
+            9) $0 shell ;;
+            10) $0 analysis ;;
+            11) $0 eda ;;
+            12) $0 test ;;
+            13) $0 test-prep ;;
+            14) $0 test-models ;;
+            15) $0 test-utils ;;
+            16) $0 test-ci ;;
+            17) $0 test-quick ;;
+            18) $0 validate ;;
+            19) $0 logs ;;
+            20) $0 status ;;
+            21) $0 cleanup ;;
+            22) $0 help ;;
+            23) exit 0 ;;
             *) log_error "Opzione non valida!" ;;
         esac
         ;;

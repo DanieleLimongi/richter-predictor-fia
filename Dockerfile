@@ -56,8 +56,7 @@ EXPOSE 8000
 
 # Health check incluso test di base
 HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
-    CMD python -c "import tensorflow as tf; import sys; sys.path.append('tests'); print('TensorFlow OK')" && \
-        python tests/run_tests.py --ci --test utils || exit 1
+    CMD python -c "import tensorflow as tf; import numpy as np; import pandas as pd; print('Core dependencies OK')" || exit 1
 
-# Default command con opzioni test integrate
-CMD ["python", "-c", "print(' Richter Predictor Docker Container Ready!'); print(' Available commands:'); print('  • python create_submission_fixed.py                    # Create submission'); print('  • python src/models/train_final_nested_cv.py          # Train with Nested CV'); print('  • python tests/run_tests.py                          # Run full test suite'); print('  • python tests/run_tests.py --test preprocessing     # Test preprocessing only'); print('  • python tests/run_tests.py --test models            # Test models only'); print('  • python tests/run_tests.py --test utils             # Test utilities only'); print('  • python tests/run_tests.py --ci                     # CI mode for automation'); print('  • python docker-helper.sh                            # Helper commands')"]
+# Default command con opzioni aggiornate
+CMD ["python", "-c", "print('Richter Predictor Docker Container Ready!'); print('Available commands:'); print('  - python src/models/train_advanced_ensemble.py       # Train advanced ensemble'); print('  - python src/models/train_nested_cv_ensemble.py      # Train with Nested CV'); print('  - python src/models/train_simple_holdout.py          # Train simple holdout'); print('  - python tests/run_tests.py                          # Run full test suite'); print('  - python test_nested_cv_subset.py                    # Test nested CV subset'); print('  - python src/data/eda.py                             # Run EDA analysis'); print('  - python debug_sparsity.py                           # Debug data sparsity'); print('  - ls models/                                          # View trained models')"]

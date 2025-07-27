@@ -28,15 +28,15 @@ except ImportError as e:
     INTEGRATION_AVAILABLE = False
     
     def run_integration_tests():
-        print("🔗 Integration tests are not available in this environment")
+        print("Integration tests are not available in this environment")
         return True
 
 
 def run_all_tests():
     """Esegue tutte le test suite ottimizzate in sequenza"""
-    print("🎯 RICHTER PREDICTOR - CONSOLIDATED TEST RUNNER")
+    print("RICHTER PREDICTOR - CONSOLIDATED TEST RUNNER")
     print("=" * 80)
-    print("🔧 Running all optimized test suites...")
+    print("Running all optimized test suites...")
     print("")
     
     results = {}
@@ -47,9 +47,9 @@ def run_all_tests():
     print("-" * 50)
     try:
         results['core'] = run_core_consolidated_tests()
-        print("✅ Core consolidated tests completed")
+        print("Core consolidated tests completed")
     except Exception as e:
-        print(f"❌ Core consolidated tests failed: {e}")
+        print(f"Core consolidated tests failed: {e}")
         results['core'] = False
     
     print("\n" + "=" * 80)
@@ -60,9 +60,9 @@ def run_all_tests():
     try:
         model_result = run_model_tests()
         results['models'] = model_result.wasSuccessful()
-        print("✅ Model tests completed")
+        print("Model tests completed")
     except Exception as e:
-        print(f"❌ Model tests failed: {e}")
+        print(f"Model tests failed: {e}")
         results['models'] = False
     
     print("\n" + "=" * 80)
@@ -72,9 +72,9 @@ def run_all_tests():
     print("-" * 50)
     try:
         results['ensemble'] = run_ensemble_tests()
-        print("✅ Ensemble tests completed")
+        print("Ensemble tests completed")
     except Exception as e:
-        print(f"❌ Ensemble tests failed: {e}")
+        print(f"Ensemble tests failed: {e}")
         results['ensemble'] = False
     
     print("\n" + "=" * 80)
@@ -88,39 +88,39 @@ def run_all_tests():
         else:
             print("Integration tests skipped (modules not available)")
             results['integration'] = True
-        print("✅ Integration tests completed")
+        print("Integration tests completed")
     except Exception as e:
-        print(f"❌ Integration tests failed: {e}")
+        print(f"Integration tests failed: {e}")
         results['integration'] = False
     
     # Summary finale
     total_duration = time.time() - total_start_time
     
     print("\n" + "=" * 80)
-    print("📊 FINAL TEST SUMMARY")
+    print("FINAL TEST SUMMARY")
     print("=" * 80)
     
     passed_suites = sum(results.values())
     total_suites = len(results)
     
     print(f"⏱️  Total execution time: {total_duration:.2f} seconds")
-    print(f"📦 Test suites executed: {total_suites}")
-    print(f"✅ Suites passed: {passed_suites}")
-    print(f"❌ Suites failed: {total_suites - passed_suites}")
-    print(f"📈 Success rate: {(passed_suites/total_suites)*100:.1f}%")
+    print(f"Test suites executed: {total_suites}")
+    print(f"Suites passed: {passed_suites}")
+    print(f"Suites failed: {total_suites - passed_suites}")
+    print(f"Success rate: {(passed_suites/total_suites)*100:.1f}%")
     
     print("\nDetailed Results:")
     for suite_name, passed in results.items():
-        status = "✅ PASSED" if passed else "❌ FAILED"
+        status = "PASSED" if passed else "FAILED"
         print(f"   {suite_name.upper():20} {status}")
     
     if passed_suites == total_suites:
-        print("\n🎉 ALL TEST SUITES PASSED!")
-        print("🚀 System is ready for deployment")
+        print("\nALL TEST SUITES PASSED!")
+        print("System is ready for deployment")
         exit_code = 0
     else:
-        print("\n⚠️  SOME TEST SUITES FAILED")
-        print("🔧 Please review failures before deployment")
+        print("\nSOME TEST SUITES FAILED")
+        print("Please review failures before deployment")
         exit_code = 1
     
     print("=" * 80)
@@ -138,31 +138,31 @@ def run_specific_suite(suite_name):
     }
     
     if suite_name not in suite_map:
-        print(f"❌ Unknown test suite: {suite_name}")
+        print(f"Unknown test suite: {suite_name}")
         print(f"Available suites: {list(suite_map.keys())}")
         return 1
     
-    print(f"🎯 Running {suite_name.upper()} test suite...")
+    print(f"Running {suite_name.upper()} test suite...")
     print("=" * 50)
     
     try:
         success = suite_map[suite_name]()
         if success:
-            print(f"✅ {suite_name.upper()} tests passed!")
+            print(f"{suite_name.upper()} tests passed!")
             return 0
         else:
-            print(f"❌ {suite_name.upper()} tests failed!")
+            print(f"{suite_name.upper()} tests failed!")
             return 1
     except Exception as e:
-        print(f"💥 {suite_name.upper()} tests crashed: {e}")
+        print(f"{suite_name.upper()} tests crashed: {e}")
         return 1
 
 
 def show_optimization_summary():
     """Mostra il summary delle ottimizzazioni applicate"""
-    print("📊 TEST SUITE OPTIMIZATION SUMMARY")
+    print("TEST SUITE OPTIMIZATION SUMMARY")
     print("=" * 60)
-    print("🔧 Consolidation Applied:")
+    print("Consolidation Applied:")
     print("")
     print("BEFORE (6 files):")
     print("   ├── test_core_functionality.py")
@@ -180,14 +180,14 @@ def show_optimization_summary():
     print("   ├── test_ensemble.py               [RENAMED - uses factory]")
     print("   └── test_integration.py            [OPTIMIZED - uses factory]")
     print("")
-    print("✅ Benefits:")
+    print("Benefits:")
     print("   • ~40% reduction in code duplication")
     print("   • Standardized test data creation")
     print("   • Improved maintainability")
     print("   • Consistent test patterns")
     print("   • Centralized validation logic")
     print("")
-    print("🔧 Removed Redundancies:")
+    print("Removed Redundancies:")
     print("   • Duplicate synthetic data creation")
     print("   • Overlapping data validation tests")
     print("   • Repeated file I/O testing")
@@ -210,7 +210,7 @@ if __name__ == "__main__":
         elif command in ['core', 'models', 'ensemble', 'integration']:
             exit_code = run_specific_suite(command)
         elif command in ['help', '-h', '--help']:
-            print("🎯 RICHTER PREDICTOR - CONSOLIDATED TEST RUNNER")
+            print("RICHTER PREDICTOR - CONSOLIDATED TEST RUNNER")
             print("=" * 60)
             print("Usage:")
             print("   python run_tests.py all          # Run all test suites")
@@ -221,14 +221,14 @@ if __name__ == "__main__":
             print("   python run_tests.py summary      # Show optimization summary")
             print("   python run_tests.py help         # Show this help")
             print("")
-            print("📦 Test Suite Structure:")
+            print("Test Suite Structure:")
             print("   • core:        Feature engineering + utils + preprocessing")
             print("   • models:      TensorFlow/Keras model architectures")
             print("   • ensemble:    Ensemble architectures and combinations")
             print("   • integration: End-to-end workflow validation")
             exit_code = 0
         else:
-            print(f"❌ Unknown command: {command}")
+            print(f"Unknown command: {command}")
             print("Use 'python run_tests.py help' for usage information")
             exit_code = 1
     else:

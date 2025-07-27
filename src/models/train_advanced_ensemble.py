@@ -32,16 +32,16 @@ class RichterTrainer:
         
     def load_data(self):
         """Carica e processa dati"""
-        print("📂 Loading data...")
+        print("Loading data...")
         
         # Carica dati
         analyzer = DataAnalyzer()
         df = analyzer.load_data()
         
-        # Feature engineering - BYPASS per mantenere performance
+        # Feature engineering
         engineer = AdvancedFeatureEngineer()
-        print("⚠️ BYPASSING Advanced Feature Engineering (mantiene performance)")
-        df_enhanced = df  # USA DATI RAW che funzionano!
+        print("Applying Advanced Feature Engineering...")
+        df_enhanced = engineer.fit_transform(df)
         
         # Preprocessing
         try:
@@ -88,7 +88,7 @@ class RichterTrainer:
             self.preprocessing_pipeline = pipeline
             
         except Exception as e:
-            print(f"⚠️ Preprocessing failed: {e}, using fallback")
+            print(f"WARNING: Preprocessing failed: {e}, using fallback")
             # Fallback semplice
             y = df_enhanced['damage_grade'].values - 1
             X_df = df_enhanced.drop(['damage_grade', 'building_id'], axis=1, errors='ignore')
@@ -112,51 +112,31 @@ class RichterTrainer:
     
     def train_ensemble(self, X, y):
         """Training con CV - AUTOMATICO dataset size selection"""
-        print("🚀 Training ensemble...")
+        print("Training ensemble...")
         
-        # 🚀 ADAPTIVE DATASET SIZE basato su quello che FUNZIONAVA
+        # UTILIZZO COMPLETO DEL DATASET per massimizzare performance
         dataset_size = len(X)
         dataset_gb = (X.nbytes + y.nbytes) / (1024**3)
         
-        # USA SUBSET come nel test_simple_mlp.py che dava F1=0.64!
-        if dataset_size > 50000:
-            # Usa subset strategico che FUNZIONA
-            subset_size = 50000  # Dimensione che aveva dato F1=0.64
-            print(f"   📊 Large dataset detected ({dataset_size:,} samples)")
-            print(f"   🎯 Using WORKING subset size: {subset_size:,} samples (like test_simple_mlp)")
-            
-            # Subset stratificato per mantenere class balance
-            from sklearn.model_selection import train_test_split
-            indices = np.arange(len(X))
-            _, selected_indices, _, _ = train_test_split(
-                indices, y, 
-                test_size=subset_size/len(X), 
-                stratify=y, 
-                random_state=42
-            )
-            
-            X = X[selected_indices]
-            y = y[selected_indices]
-            
-            print(f"   ✅ Subset ready: {X.shape[0]:,} samples, class distribution: {np.bincount(y)}")
-        else:
-            print(f"   📊 Using full dataset: {dataset_size:,} samples")
+        print(f"   Using FULL dataset: {dataset_size:,} samples")
+        print(f"   Dataset size: {dataset_gb:.2f}GB")
+        print(f"   Full training for maximum F1-score performance")
         
-        # 🚀 MEMORY CHECK con gestione graceful
+        # MEMORY CHECK con gestione graceful
         try:
             import psutil
             memory_info = psutil.virtual_memory()
             available_gb = memory_info.available / (1024**3)
             current_dataset_gb = (X.nbytes + y.nbytes) / (1024**3)
             
-            print(f"   💾 Memory: {available_gb:.1f}GB available, dataset: {current_dataset_gb:.2f}GB")
+            print(f"   Memory: {available_gb:.1f}GB available, dataset: {current_dataset_gb:.2f}GB")
             
             if current_dataset_gb > available_gb * 0.4:
-                print(f"   ⚠️ WARNING: Dataset uses {current_dataset_gb/available_gb*100:.1f}% of available memory")
+                print(f"   WARNING: Dataset uses {current_dataset_gb/available_gb*100:.1f}% of available memory")
         except ImportError:
-            print("   💾 Memory monitoring unavailable (install psutil for monitoring)")
+            print("   Memory monitoring unavailable (install psutil for monitoring)")
         except Exception as e:
-            print(f"   💾 Memory check failed: {e}")
+            print(f"   Memory check failed: {e}")
         
         # Analisi class imbalance
         class_counts = np.bincount(y)
@@ -165,14 +145,14 @@ class RichterTrainer:
         # Analisi sparsity
         sparsity = (1 - np.count_nonzero(X) / X.size) * 100
         
-        print(f"   📊 Class distribution: {class_counts}")
-        print(f"   📈 Majority baseline: {majority_baseline:.3f}")
-        print(f"   🕳️ Data sparsity: {sparsity:.1f}%")
-        print(f"   🎯 Target F1: {self.target_f1:.3f}")
+        print(f"   Class distribution: {class_counts}")
+        print(f"   Majority baseline: {majority_baseline:.3f}")
+        print(f"   Data sparsity: {sparsity:.1f}%")
+        print(f"   Target F1: {self.target_f1:.3f}")
         
         # Warning per dati troppo sparsi
         if sparsity > 70:
-            print(f"   ⚠️ WARNING: Dataset molto sparso ({sparsity:.1f}%) - training potrebbe essere instabile")
+            print(f"   WARNING: Dataset molto sparso ({sparsity:.1f}%) - training potrebbe essere instabile")
         
         # Setup
         ensemble = EnsembleArchitectures(X.shape[1], 3)
@@ -186,7 +166,7 @@ class RichterTrainer:
         fold_scores = []
         
         # Progress bar per fold
-        fold_pbar = tqdm(enumerate(cv.split(X, y)), total=6, desc="🎯 CV Folds", 
+        fold_pbar = tqdm(enumerate(cv.split(X, y)), total=6, desc="CV Folds", 
                         bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]")
         
         for fold, (train_idx, val_idx) in fold_pbar:
@@ -202,7 +182,7 @@ class RichterTrainer:
                 model = ensemble.create_architecture(arch)
                 
                 # Update progress bar description
-                fold_pbar.set_description(f"🎯 Fold {fold+1}/6 ({arch})")
+                fold_pbar.set_description(f"Fold {fold+1}/6 ({arch})")
                 
                 # Compile
                 try:
@@ -220,7 +200,7 @@ class RichterTrainer:
                         self.fold_pbar = fold_pbar
                         self.fold_num = fold_num
                         self.arch_name = arch_name
-                        self.max_epochs = max_epochs  # 🚀 NUOVO: epoch dinamiche
+                        self.max_epochs = max_epochs  # NUOVO: epoch dinamiche
                         self.epoch_pbar = None
                         self.epochs_completed = 0
                         self.training_start = time.time()
@@ -238,7 +218,7 @@ class RichterTrainer:
                         elapsed = time.time() - self.training_start
                         epoch_speed = elapsed / (epoch + 1)
                         
-                        # 🚀 DINAMICO: Usa epoch correnti
+                        # DINAMICO: Usa epoch correnti
                         postfix = f"Ep {epoch+1}/{self.max_epochs} | Val_Acc: {val_acc:.3f} | Val_Loss: {val_loss:.3f} | {epoch_speed:.1f}s/ep"
                         self.fold_pbar.set_postfix_str(postfix)
                         
@@ -251,59 +231,45 @@ class RichterTrainer:
                             'avg_epoch_time': total_time / max(self.epochs_completed, 1)
                         }
                 
+                # MASSIMO SFRUTTAMENTO GPU: Parametri fissi ottimali
+                batch_size = 2048    # Batch size molto alto per GPU
+                epochs = 200         # Epoche elevate per convergenza completa
+                patience = 30        # Pazienza alta per evitare stop prematuro
+                
+                print(f"   GPU-optimized params: batch={batch_size}, epochs={epochs}, patience={patience}")
+                
                 # Train con callback progress
-                progress_callback = FoldProgressCallback(fold_pbar, fold, arch, epochs)  # 🚀 Passa epochs
+                progress_callback = FoldProgressCallback(fold_pbar, fold, arch, epochs)
                 
-                # 🚀 ADAPTIVE TRAINING PARAMETERS basati su dataset size
-                dataset_size = len(X_train)
-                
-                # Batch size adattivo
-                if dataset_size > 200000:
-                    batch_size = 512  # Dataset molto grande
-                    epochs = 50      # Meno epoch ma batch grandi
-                    patience = 15    # Early stopping più aggressivo
-                elif dataset_size > 50000:
-                    batch_size = 256  # Dataset grande
-                    epochs = 60
-                    patience = 20
-                else:
-                    batch_size = 64   # Dataset piccolo (come prima)
-                    epochs = 80
-                    patience = 25
-                
-                # 🚀 AGGIORNA CALLBACK con epoch correnti
+                # AGGIORNA CALLBACK con epoch correnti
                 progress_callback.max_epochs = epochs
                 
-                print(f"   🎛️ Adaptive params: batch={batch_size}, epochs={epochs}, patience={patience}")
                 
-                # Callback per Early Stopping AGGRESSIVO per dataset grandi
+                # Callback per Early Stopping MENO AGGRESSIVO per convergenza completa
                 early_stopping = tf.keras.callbacks.EarlyStopping(
                     patience=patience,
                     restore_best_weights=True,
                     verbose=0,
                     monitor='val_loss',
-                    min_delta=0.001 if dataset_size < 100000 else 0.005  # Soglia più alta per dataset grandi
+                    min_delta=0.0005  # Soglia più bassa per convergenza fine
                 )
                 
-                # 🚀 MEMORY MANAGEMENT: Usa steps_per_epoch per dataset grandi
-                steps_per_epoch = None
-                if dataset_size > 150000:
-                    # Limita steps per epoch per memory management
-                    steps_per_epoch = min(1000, len(X_train) // batch_size)
+                # TRAINING COMPLETO: Nessuna limitazione steps_per_epoch
+                steps_per_epoch = None  # Utilizza tutto il dataset per epoch
                 
                 history = model.fit(
                     X_train, y_train,
                     validation_data=(X_val, y_val),
                     epochs=epochs,
                     batch_size=batch_size,
-                    steps_per_epoch=steps_per_epoch,  # 🚀 NUOVO: Memory management
+                    steps_per_epoch=steps_per_epoch,  # NUOVO: Memory management
                     callbacks=[
                         early_stopping,
                         tf.keras.callbacks.ReduceLROnPlateau(
-                            factor=0.3,   # Più aggressivo per dataset grandi
-                            patience=max(3, patience//5), 
+                            factor=0.5,   # Meno aggressivo per convergenza fine
+                            patience=max(8, patience//4), 
                             verbose=0,
-                            min_lr=1e-7
+                            min_lr=1e-8
                         ),
                         progress_callback
                     ],
@@ -312,8 +278,8 @@ class RichterTrainer:
                 
                 # Diagnostica training
                 epochs_trained = len(history.history['loss'])
-                early_stopped = epochs_trained < epochs  # 🚀 CORRETTO: usa epochs dinamico
-                fold_duration = time.time() - fold_start_time  # 🚀 SPOSTATO QUI
+                early_stopped = epochs_trained < epochs  # CORRETTO: usa epochs dinamico
+                fold_duration = time.time() - fold_start_time  # SPOSTATO QUI
                 training_time = getattr(progress_callback, 'training_summary', {}).get('total_time', fold_duration)
                 
                 # Evaluate
@@ -323,38 +289,36 @@ class RichterTrainer:
                 f1 = f1_score(y_val, np.argmax(pred, axis=1), average='micro')
                 fold_scores.append(f1)
                 
-                # 🚀 SOGLIA F1 ADATTIVA basata su dataset size e class distribution
+                # SOGLIA F1 OTTIMIZZATA per dataset completo
                 dataset_size = len(X)
                 class_imbalance = max(class_counts) / sum(class_counts)
                 
+                # Soglia più alta con dataset completo
                 if dataset_size > 200000:
-                    # Dataset grande: soglia più alta ma realistica
-                    base_threshold = 0.45
-                elif dataset_size > 50000:
-                    # Dataset medio
-                    base_threshold = 0.40
+                    base_threshold = 0.55  # Aspettative più alte
+                elif dataset_size > 100000:
+                    base_threshold = 0.50
                 else:
-                    # Dataset piccolo: soglia più bassa
-                    base_threshold = 0.35
+                    base_threshold = 0.45
                 
-                # Aggiusta per class imbalance
-                imbalance_penalty = (class_imbalance - 0.33) * 0.2  # Penalty per sbilanciamento
-                threshold = max(0.30, base_threshold - imbalance_penalty)
+                # Aggiusta per class imbalance (meno penalty)
+                imbalance_penalty = (class_imbalance - 0.33) * 0.1  # Penalty ridotta
+                threshold = max(0.40, base_threshold - imbalance_penalty)
                 
-                print(f"   📊 Adaptive threshold: {threshold:.3f} (size={dataset_size}, imbalance={class_imbalance:.2f})")
+                print(f"   Adaptive threshold: {threshold:.3f} (size={dataset_size}, imbalance={class_imbalance:.2f})")
                 
                 if f1 > threshold:
                     self.models.append({'model': model, 'arch': arch, 'f1': f1})
-                    status = "✅"
+                    status = "PASS"
                 else:
-                    status = "❌"
+                    status = "FAIL"
                 
                 # Final update con diagnostica
                 early_info = f" (ES:{epochs_trained}ep)" if early_stopped else f" ({epochs_trained}ep)"
                 fold_pbar.set_postfix_str(f"{status} F1: {f1:.3f} | {fold_duration:.1f}s{early_info} | Thr:{threshold:.2f}")
                 
             except Exception as e:
-                fold_pbar.set_postfix_str(f"💥 Failed: {str(e)[:30]}...")
+                fold_pbar.set_postfix_str(f"FAILED: {str(e)[:30]}...")
                 self.oof_predictions[val_idx] = 1/3
                 fold_scores.append(0.33)
         
@@ -364,10 +328,10 @@ class RichterTrainer:
         oof_classes = np.argmax(self.oof_predictions, axis=1)
         self.final_f1 = f1_score(y, oof_classes, average='micro')
         
-        print(f"\n📊 Results:")
+        print(f"\nResults:")
         print(f"   Fold F1s: {[f'{f:.3f}' for f in fold_scores]}")
-        print(f"   🎯 Final F1: {self.final_f1:.4f}")
-        print(f"   Target: {'✅' if self.final_f1 >= self.target_f1 else '❌'}")
+        print(f"   Final F1: {self.final_f1:.4f}")
+        print(f"   Target: {'REACHED' if self.final_f1 >= self.target_f1 else 'MISSED'}")
         print(f"   Models: {len(self.models)}/6")
         
         return self.final_f1
@@ -398,12 +362,12 @@ class RichterTrainer:
         with open(path / "config.json", 'w') as f:
             json.dump(config, f)
         
-        print(f"💾 Saved to: {path}")
+        print(f"Saved to: {path}")
         return path
 
 def main():
     """Main function"""
-    print("🏆 RICHTER ENSEMBLE TRAINER")
+    print("RICHTER ENSEMBLE TRAINER")
     print("=" * 40)
     
     trainer = RichterTrainer()
@@ -418,7 +382,7 @@ def main():
     path = trainer.save()
     
     # Summary
-    print(f"\n🎉 DONE!")
+    print(f"\nDONE!")
     print(f"   F1: {f1:.4f}")
     print(f"   Target: {'REACHED' if f1 >= 0.78 else 'MISSED'}")
     print(f"   Path: {path}")

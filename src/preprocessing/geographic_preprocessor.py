@@ -61,7 +61,7 @@ class GeographicPreprocessor(BasePreprocessor):
         Returns:
             self per method chaining
         """
-        print(f"📍 Fitting {self.name}...")
+        print(f"Fitting {self.name}...")
         
         available_features = self._filter_available_features(data_dict)
         

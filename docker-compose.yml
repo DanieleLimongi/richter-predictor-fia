@@ -49,12 +49,12 @@ services:
     volumes:
       - ./data:/app/data:ro
       - ./models:/app/models:ro
-      - ./submissions:/app/submissions:rw
+      - ./reports:/app/reports:rw
     environment:
       - PYTHONPATH=/app/src
       - TF_CPP_MIN_LOG_LEVEL=2
     working_dir: /app
-    command: python create_submission_fixed.py
+    command: echo "Please add submission script or use available models"
     profiles:
       - submission
 
@@ -74,6 +74,6 @@ services:
       - TF_CPP_MIN_LOG_LEVEL=1
       - CUDA_VISIBLE_DEVICES=0
     working_dir: /app
-    command: python src/models/train_final_nested_cv.py
+    command: python src/models/train_nested_cv_ensemble.py
     profiles:
       - training

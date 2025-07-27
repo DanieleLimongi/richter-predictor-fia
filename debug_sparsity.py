@@ -30,7 +30,7 @@ def analyze_sparsity(data, name):
             zero_elements += np.sum(np_array == 0)
             
         sparsity = (zero_elements / total_elements) * 100
-        print(f"📊 {name}:")
+        print(f"{name}:")
         print(f"   Total elements: {total_elements:,}")
         print(f"   Zero elements: {zero_elements:,}")
         print(f"   Sparsity: {sparsity:.1f}%")
@@ -40,7 +40,7 @@ def analyze_sparsity(data, name):
         total_elements = data.size
         zero_elements = np.sum(data == 0)
         sparsity = (zero_elements / total_elements) * 100
-        print(f"📊 {name}:")
+        print(f"{name}:")
         print(f"   Shape: {data.shape}")
         print(f"   Total elements: {total_elements:,}")
         print(f"   Zero elements: {zero_elements:,}")
@@ -52,7 +52,7 @@ def analyze_sparsity(data, name):
         zero_elements = (data == 0).sum().sum()
         null_elements = data.isnull().sum().sum()
         sparsity = ((zero_elements + null_elements) / total_elements) * 100
-        print(f"📊 {name}:")
+        print(f"{name}:")
         print(f"   Shape: {data.shape}")
         print(f"   Total elements: {total_elements:,}")
         print(f"   Zero elements: {zero_elements:,}")
@@ -60,7 +60,7 @@ def analyze_sparsity(data, name):
         print(f"   Sparsity: {sparsity:.1f}%")
 
 def main():
-    print("🔍 Debug Sparsity Analysis")
+    print("Debug Sparsity Analysis")
     print("="*50)
     
     # 1. Carica dati raw
