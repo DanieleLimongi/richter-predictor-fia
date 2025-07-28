@@ -167,7 +167,7 @@ def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
     # Path dinamici basati su project_root
-    models_dir = project_root / 'models'
+    models_dir = project_root / 'models' / 'simple_models'
     reports_dir = project_root / 'reports' / 'mlp_results'
     
     # Assicura che le directory esistano

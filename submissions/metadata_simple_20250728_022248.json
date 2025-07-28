@@ -1,0 +1,21 @@
+{
+  "timestamp": "20250728_022248",
+  "model_type": "simple_holdout",
+  "model_info": {
+    "model_path": "/home/riccardo_csl/richter-predictor-fia/models/simple_models/mlp_model_refactored_20250728_022151.keras",
+    "engineer_path": "/home/riccardo_csl/richter-predictor-fia/models/simple_models/feature_engineer_20250728_022151.pkl",
+    "model_metadata": null,
+    "input_features": 265
+  },
+  "submission_file": "/home/riccardo_csl/richter-predictor-fia/submissions/submission_simple_20250728_022248.csv",
+  "num_predictions": 86868,
+  "damage_distribution": {
+    "1": 4635,
+    "2": 60620,
+    "3": 21613
+  },
+  "building_id_range": [
+    7,
+    1052923
+  ]
+}

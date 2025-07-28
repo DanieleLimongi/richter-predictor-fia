@@ -18,6 +18,7 @@ from sklearn.metrics import f1_score, classification_report
 from datetime import datetime
 from tqdm import tqdm
 import json
+import pickle
 from typing import Dict, List, Tuple, Any
 import random
 import warnings
@@ -89,6 +90,7 @@ class NestedCVRichterTrainer:
         self.best_models = []
         self.final_f1 = 0.0
         self.leakage_detector = LeakageDetector()
+        self.final_feature_engineer = None  # Salva l'ultimo feature engineer per submission
         
         # Hyperparameter search space
         self.random_search_space = {
@@ -132,6 +134,9 @@ class NestedCVRichterTrainer:
         
         X_train_enhanced = engineer.fit_transform(X_train_df)
         X_val_enhanced = engineer.transform(X_val_df)
+        
+        # Salva l'ultimo feature engineer (sarà usato per submission)
+        self.final_feature_engineer = engineer
         
         print(f"      Features created: {len(X_train_enhanced.columns)}")
         
@@ -489,13 +494,22 @@ class NestedCVRichterTrainer:
     def save_nested_cv_results(self):
         """Salva risultati completi nested CV"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        path = Path(f"models/nested_cv_ensemble_f1_{self.final_f1:.4f}_{timestamp}")
+        path = Path(f"models/nested_models/nested_cv_ensemble_f1_{self.final_f1:.4f}_{timestamp}")
         path.mkdir(parents=True, exist_ok=True)
         
         # Salva modelli selezionati
         for i, result in enumerate(self.best_models):
             model_path = path / f"model_{i+1}_{result['architecture']}_fold{result['outer_fold']}.keras"
             result['model'].save(model_path)
+        
+        # Salva feature engineer
+        if self.final_feature_engineer is not None:
+            engineer_path = path / f"feature_engineer_{timestamp}.pkl"
+            with open(engineer_path, 'wb') as f:
+                pickle.dump(self.final_feature_engineer, f)
+            print(f"   Feature engineer saved to: {engineer_path.name}")
+        else:
+            print("   WARNING: No feature engineer to save!")
         
         # Config completo con conversione tipi per JSON
         config = {
