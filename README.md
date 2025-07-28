@@ -445,22 +445,6 @@ python tests/run_tests.py --test ensemble  # Ensemble system
 - pandas 2.2.3
 - numpy 1.26.4
 
-## Development
-
-### Adding New Features
-
-1. Create feature module in `src/feature_engineering/`
-2. Inherit from `ConfigurableFeatureEngineer`
-3. Add to processing order in `orchestrator.py`
-4. Write comprehensive tests
-
-### Adding New Architectures
-
-1. Add architecture method to `EnsembleArchitectures`
-2. Update `get_available_architectures()`
-3. Test with training pipeline
-4. Add performance benchmarks
-
 ## Troubleshooting
 
 ### Common Issues
