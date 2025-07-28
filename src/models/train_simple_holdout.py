@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Training MLP semplice per Richter Predictor - REFACTORED
-Utilizza componenti modulari esistenti eliminando duplicazioni
+Utilizza componenti modulari esistenti 
 """
 
 import os
@@ -65,7 +65,7 @@ def create_model_from_ensemble_architectures(input_dim, architecture='regularize
     """Crea modello usando EnsembleArchitectures esistente"""
     print(f"  Creazione modello '{architecture}' tramite EnsembleArchitectures...")
     
-    # Usa architettura esistente invece di duplicare
+    # Usa architettura esistente 
     ensemble = EnsembleArchitectures(input_dim, num_classes)
     model = ensemble.create_architecture(architecture)
     
