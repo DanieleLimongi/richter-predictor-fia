@@ -32,7 +32,7 @@ tf.get_logger().setLevel('ERROR')
 
 def load_and_preprocess_data():
     """Carica dati usando DataAnalyzer e applica feature engineering modulare"""
-    print("📊 Caricamento dati tramite DataAnalyzer...")
+    print(" Caricamento dati tramite DataAnalyzer...")
     
     # Usa DataAnalyzer esistente invece di duplicare logica
     analyzer = DataAnalyzer()
@@ -45,7 +45,7 @@ def load_and_preprocess_data():
     X_df = train_df[feature_cols]
     y = (train_df['damage_grade'] - 1).astype(np.int32)  # Convert to 0-2
     
-    print("🔧 Applicazione feature engineering modulare...")
+    print(" Applicazione feature engineering modulare...")
     
     # Feature engineering con architettura modulare
     engineer = AdvancedFeatureEngineer()
@@ -54,7 +54,7 @@ def load_and_preprocess_data():
     # Conversione ottimizzata
     X = X_enhanced.values.astype(np.float32)
     
-    print(f"✅ Feature engineering completato!")
+    print(f" Feature engineering completato!")
     print(f"   Shape finale: {X.shape}")
     print(f"   Features create: +{len(X_enhanced.columns) - len(X_df.columns)}")
     print(f"   Target distribution: {np.bincount(y)}")
@@ -63,7 +63,7 @@ def load_and_preprocess_data():
 
 def create_model_from_ensemble_architectures(input_dim, architecture='regularized', num_classes=3):
     """Crea modello usando EnsembleArchitectures esistente"""
-    print(f"🏗️  Creazione modello '{architecture}' tramite EnsembleArchitectures...")
+    print(f"  Creazione modello '{architecture}' tramite EnsembleArchitectures...")
     
     # Usa architettura esistente invece di duplicare
     ensemble = EnsembleArchitectures(input_dim, num_classes)
@@ -89,11 +89,11 @@ def create_model_from_ensemble_architectures(input_dim, architecture='regularize
 
 def main():
     """Training principale con componenti modulari"""
-    print("🚀 RICHTER PREDICTOR - MLP TRAINING REFACTORED")
+    print(" RICHTER PREDICTOR - MLP TRAINING REFACTORED")
     print("=" * 60)
-    print("   ✅ Usa DataAnalyzer per data loading")
-    print("   ✅ Usa EnsembleArchitectures per modello")
-    print("   ✅ Path dinamici e configurazione centralizzata")
+    print("    Usa DataAnalyzer per data loading")
+    print("    Usa EnsembleArchitectures per modello")
+    print("    Path dinamici e configurazione centralizzata")
     print()
     
     # Carica e preprocessa dati con componenti esistenti
@@ -109,7 +109,7 @@ def main():
         X_work, y_work, test_size=0.2, random_state=42, stratify=y_work
     )
     
-    print(f"📊 Split dati:")
+    print(f" Split dati:")
     print(f"   Train: {X_train.shape[0]} | Val: {X_val.shape[0]} | Holdout: {X_holdout.shape[0]}")
     print(f"   Percentuali: {X_train.shape[0]/len(X)*100:.1f}% train | {X_val.shape[0]/len(X)*100:.1f}% val | {X_holdout.shape[0]/len(X)*100:.1f}% holdout")
     print()
@@ -136,7 +136,7 @@ def main():
     ]
     
     # Training
-    print("🏃 Inizio training...")
+    print(" Inizio training...")
     history = model.fit(
         X_train, y_train,
         batch_size=1024,  # Batch size grande per GPU
@@ -147,19 +147,19 @@ def main():
     )
     
     # Valutazione finale su holdout (mai visto dal modello)
-    print("\n🎯 Valutazione finale su holdout...")
+    print("\n Valutazione finale su holdout...")
     y_pred_holdout = model.predict(X_holdout, batch_size=2048, verbose=0)
     y_pred_holdout_classes = np.argmax(y_pred_holdout, axis=1)
     
     holdout_accuracy = accuracy_score(y_holdout, y_pred_holdout_classes)
     holdout_f1 = f1_score(y_holdout, y_pred_holdout_classes, average='weighted')
     
-    print(f"📈 Risultati finali:")
+    print(f" Risultati finali:")
     print(f"   Holdout Accuracy: {holdout_accuracy:.4f}")
     print(f"   Holdout F1-Score: {holdout_f1:.4f}")
     
     # Report dettagliato
-    print("\n📊 Classification Report (Holdout):")
+    print("\n Classification Report (Holdout):")
     print(classification_report(y_holdout, y_pred_holdout_classes, 
                               target_names=['Grade 1', 'Grade 2', 'Grade 3']))
     
@@ -178,7 +178,7 @@ def main():
     model_path = models_dir / f'mlp_model_refactored_{timestamp}.keras'
     engineer_path = models_dir / f'feature_engineer_{timestamp}.pkl'
     
-    print(f"\n💾 Salvataggio modello e pipeline...")
+    print(f"\n Salvataggio modello e pipeline...")
     
     # Salva modello
     model.save(str(model_path))
@@ -213,12 +213,12 @@ def main():
     with open(results_path, 'w') as f:
         json.dump(results, f, indent=2)
     
-    print(f"   ✅ Modello salvato: {model_path}")
-    print(f"   ✅ Feature Engineer salvato: {engineer_path}")
-    print(f"   ✅ Risultati salvati: {results_path}")
-    print("\n🎉 Training refactored completato con successo!")
-    print("   🔄 Eliminazione duplicazioni completata")
-    print("   📦 Riutilizzo componenti modulari attivato")
+    print(f"    Modello salvato: {model_path}")
+    print(f"    Feature Engineer salvato: {engineer_path}")
+    print(f"    Risultati salvati: {results_path}")
+    print("\n Training refactored completato con successo!")
+    print("   Eliminazione duplicazioni completata")
+    print("    Riutilizzo componenti modulari attivato")
     
     return model, feature_engineer, results
 

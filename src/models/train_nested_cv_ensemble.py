@@ -102,8 +102,8 @@ class NestedCVRichterTrainer:
         self.n_random_search = 4  # Combinazioni per architettura
     
     def load_and_prepare_data(self) -> Tuple[pd.DataFrame, np.ndarray]:
-        """Carica dati RAW senza preprocessing per evitare leakage"""
-        print("Loading RAW data (no preprocessing to prevent leakage)...")
+
+        print("Loading data ...")
         
         analyzer = DataAnalyzer()
         df = analyzer.load_data()
