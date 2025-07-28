@@ -434,7 +434,8 @@ python tests/run_tests.py --test ensemble  # Ensemble system
 
 ### System Requirements
 - Python 3.10+
-- 8GB RAM (recommended for full training)
+- 32GB RAM (recommended for full training)
+- 12GB VRAM (at least)
 - 10GB disk space
 - Docker (optional but recommended)
 
@@ -516,14 +517,13 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **Maintainers:**
 
-**Daniele Limongi** - Lead Developer
+**Daniele Limongi** -
 - GitHub: [@DanieleLimongi](https://github.com/DanieleLimongi)
-- Email: daniele.limongi@example.com
 
-**Claude Debug** - AI Development Assistant
+**Claude Debug** - 
 - GitHub: [@Claude-debug](https://github.com/Claude-debug)
 
-**Riccardo CSL** - Development Contributor  
+**Riccardo CSL** -
 - GitHub: [@riccardo-csl](https://github.com/riccardo-csl)
 
 ---
