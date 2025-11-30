@@ -505,7 +505,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - GitHub: [@DanieleLimongi](https://github.com/DanieleLimongi)
 
 **Claude Debug** - 
-- GitHub: [@Claude-debug](https://github.com/Claude-debug)
+- GitHub: [@Claudio-dragotta](https://github.com/Claudio-dragotta)
 
 **Riccardo CSL** -
 - GitHub: [@riccardo-csl](https://github.com/riccardo-csl)
